@@ -1,0 +1,38 @@
+<div class="users-container">
+  <div class="page-header">
+    <h1>Users Management</h1>
+    <button class="add-user-btn">Add New User</button>
+  </div>
+  
+  <div class="users-table-card">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.role }}</td>
+          <td>
+            <span class="status-badge" [class]="user.status.toLowerCase()">
+              {{ user.status }}
+            </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-btn edit">Edit</button>
+              <button class="action-btn delete">Delete</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

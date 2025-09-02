@@ -1,0 +1,64 @@
+<div class="dashboard-layout">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <button class="menu-toggle" (click)="toggleSidenav()">
+        <span class="hamburger-line" [class.collapsed]="isSidenavCollapsed"></span>
+        <span class="hamburger-line" [class.collapsed]="isSidenavCollapsed"></span>
+        <span class="hamburger-line" [class.collapsed]="isSidenavCollapsed"></span>
+      </button>
+      <h1 class="app-title">Dashboard</h1>
+    </div>
+    
+    <div class="header-right">
+      <div class="user-info">
+        <span class="user-email">{{ userEmail }}</span>
+        <button class="logout-btn" (click)="logout()">
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidenav" [class.collapsed]="isSidenavCollapsed">
+    <div class="nav-content">
+      <ul class="nav-menu">
+        <li *ngFor="let item of menuItems" class="nav-item">
+          <a
+            class="nav-link"
+            [class.has-children]="item.children"
+            (click)="toggleMenuItem(item)"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label" [class.hidden]="isSidenavCollapsed">{{ item.label }}</span>
+            <span
+              *ngIf="item.children && !isSidenavCollapsed"
+              class="expand-icon"
+              [class.expanded]="item.expanded"
+            >
+              ▼
+            </span>
+          </a>
+          
+          <ul
+            *ngIf="item.children && item.expanded && !isSidenavCollapsed"
+            class="sub-menu"
+          >
+            <li *ngFor="let child of item.children" class="sub-item">
+              <a class="sub-link" (click)="toggleMenuItem(child)">
+                <span class="nav-icon">{{ child.icon }}</span>
+                <span class="nav-label">{{ child.label }}</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content" [class.expanded]="isSidenavCollapsed">
+    <router-outlet></router-outlet>
+  </main>
+</div>
