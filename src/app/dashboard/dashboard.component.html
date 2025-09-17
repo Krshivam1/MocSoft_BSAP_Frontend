@@ -12,8 +12,10 @@
     
     <div class="header-right">
       <div class="user-info">
-        <span class="user-email">{{ userEmail }}</span>
-        <button class="logout-btn" (click)="logout()">
+        <span class="user-name">{{ getUserDisplayName() }}</span>
+        <span class="user-email">{{ getUserEmail() }}</span>
+        <span *ngIf="getUserRole()" class="user-role">({{ getUserRole() }})</span>
+        <button class="logout-btn" >
           Logout
         </button>
       </div>
@@ -23,8 +25,11 @@
   <!-- Sidebar -->
   <nav class="sidenav" [class.collapsed]="isSidenavCollapsed">
     <div class="nav-content">
-      <ul class="nav-menu">
-        <li *ngFor="let item of menuItems" class="nav-item">
+      <div *ngIf="isLoadingMenu" class="menu-loading">
+        <p>Loading menu...</p>
+      </div>
+      <ul *ngIf="!isLoadingMenu" class="nav-menu">
+        <li *ngFor="let item of getVisibleMenuItems()" class="nav-item">
           <a
             class="nav-link"
             [class.has-children]="item.children"
@@ -45,7 +50,7 @@
             *ngIf="item.children && item.expanded && !isSidenavCollapsed"
             class="sub-menu"
           >
-            <li *ngFor="let child of item.children" class="sub-item">
+            <li *ngFor="let child of getVisibleChildren(item)" class="sub-item">
               <a class="sub-link" (click)="toggleMenuItem(child)">
                 <span class="nav-icon">{{ child.icon }}</span>
                 <span class="nav-label">{{ child.label }}</span>
