@@ -4,7 +4,7 @@
     "header header"
     "sidenav main";
   grid-template-rows: 60px 1fr;
-  grid-template-columns: 250px 1fr;
+  grid-template-columns: 300px 1fr;
   height: 100vh;
   transition: grid-template-columns 0.3s ease;
 }
@@ -131,6 +131,7 @@
 .nav-content {
   padding: 1rem 0;
   height: 100%;
+  overflow-y: auto;
 }
 
 .nav-menu {
@@ -146,7 +147,7 @@
 .nav-link {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.5rem;
   color: #e0e7ff;
   text-decoration: none;
   cursor: pointer;
@@ -166,6 +167,44 @@
   justify-content: space-between;
 }
 
+.nav-link.collapsible-menu {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #f59e0b; /* Amber border for collapsible menus */
+  justify-content: space-between;
+}
+
+.nav-link.collapsible-menu:hover {
+  background: linear-gradient(90deg, #f59e0b, #f97316); /* Amber → Orange */
+  color: white;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.nav-link.collapsible-menu.expanded {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+  color: white;
+  border-left: 3px solid #f59e0b;
+}
+
+.nav-link.router-link {
+  border-left: 3px solid transparent;
+}
+
+.nav-link.router-link:hover {
+  background: linear-gradient(90deg, #6366f1, #3b82f6); /* Indigo → Blue */
+  color: white;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  border-left: 3px solid #3b82f6;
+}
+
+.nav-link.active {
+  background: linear-gradient(90deg, #22c55e, #16a34a); /* Green gradient for active state */
+  color: white;
+  border-left: 3px solid #22c55e;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+}
+
 .nav-icon {
   font-size: 1.25rem;
   min-width: 28px;
@@ -178,6 +217,8 @@
   font-weight: 500;
   white-space: nowrap;
   transition: opacity 0.3s ease;
+  width: 100%;
+    text-align: left; /* Ensure text is left-aligned */
 }
 
 .nav-label.hidden {
@@ -228,6 +269,7 @@
   font-size: 0.875rem;
   border-radius: 6px;
   transition: all 0.3s ease;
+    text-align: left; /* Ensure text is left-aligned */
 }
 
 .sub-link:hover {

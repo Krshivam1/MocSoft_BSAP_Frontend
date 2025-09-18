@@ -9,10 +9,10 @@ import { AppComponent } from './app.component';
 import { PublicComponent } from './public/public.component';
 import { LoginComponent } from './login/login.component';
 import { AuthService } from './services/auth.service';
-import { MenuService } from './services/menu.service';
 import { NotificationService } from './services/notification.service';
 import { TokenInterceptor } from './interceptors/token.interceptor';
 import { ErrorInterceptor } from './interceptors/error.interceptor';
+import { ApiService } from './services/api.service';
 
 @NgModule({
   imports: [
@@ -27,7 +27,7 @@ import { ErrorInterceptor } from './interceptors/error.interceptor';
   declarations: [AppComponent],
   providers: [
     AuthService,
-    MenuService,
+    ApiService,
     NotificationService,
     {
       provide: HTTP_INTERCEPTORS,

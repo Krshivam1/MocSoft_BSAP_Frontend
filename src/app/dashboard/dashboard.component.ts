@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService, User } from '../services/auth.service';
-import { MenuService, MenuItem } from '../services/menu.service';
+import { ApiService } from '../services/api.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,32 +13,51 @@ import { MenuService, MenuItem } from '../services/menu.service';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit {
+ 
   isSidenavCollapsed = false;
   user: User | null = null;
-  menuItems: MenuItem[] = [];
   isLoadingMenu = true;
-  
+  menuData: any[] = [];
+  expandedMenus: { [id: number]: boolean } = {};
+  expandedSubmenus: { [id: number]: boolean } = {};
+  expandedSubchildren: { [id: number]: boolean } = {};
+  toggleMenu(menuId: number) {
+    const wasOpen = !!this.expandedMenus[menuId];
+    Object.keys(this.expandedMenus).forEach(id => {
+      this.expandedMenus[+id] = false;
+    });
+    // If it was open, close it; otherwise, open it
+    this.expandedMenus[menuId] = !wasOpen;
+  }
+
+  toggleSubmenu(submenuId: number) {
+    const wasOpen = !!this.expandedSubmenus[submenuId];
+    Object.keys(this.expandedSubmenus).forEach(id => {
+      this.expandedSubmenus[+id] = false;
+    });
+    this.expandedSubmenus[submenuId] = !wasOpen;
+  }
+
+  toggleSubchild(subchildId: number) {
+    this.expandedSubchildren[subchildId] = !this.expandedSubchildren[subchildId];
+  }
   private subscriptions: Subscription[] = [];
 
   constructor(
     private authService: AuthService,
-    private menuService: MenuService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private apiService: ApiService
   ) {}
 
   ngOnInit() {
+    this.loadUserMenu();
     this.loadUserData();
-    this.loadMenu();
-    this.subscribeToMenuChanges();
-  }
-
-  ngOnDestroy() {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+   
   }
 
   private loadUserData() {
-    // Subscribe to user changes
     const userSub = this.authService.user$.subscribe(user => {
       this.user = user;
     });
@@ -60,89 +79,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadMenu() {
+  loadUserMenu() {
     this.isLoadingMenu = true;
-    
-    const menuSub = this.menuService.initializeMenu().subscribe({
-      next: (menuItems) => {
-        this.menuItems = menuItems;
+    const menuSub = this.apiService.get_user_menu().subscribe({
+      next: (res) => {
+        // Expecting res.status, res.message, res.data
+        if (res.status === 'SUCCESS' && Array.isArray(res.data)) {
+          this.menuData = res.data;
+        } else {
+          this.menuData = [];
+        }
+        console.log('User menu loaded:', res);
         this.isLoadingMenu = false;
       },
       error: (error) => {
-        console.error('Failed to load menu:', error);
+        console.error('Failed to load user menu:', error);
         this.isLoadingMenu = false;
-        // Use default menu items as fallback
-        this.menuItems = this.getDefaultMenuItems();
+        this.menuData = [];
       }
     });
     this.subscriptions.push(menuSub);
-  }
-
-  private subscribeToMenuChanges() {
-    const menuSub = this.menuService.menuItems$.subscribe(menuItems => {
-      this.menuItems = menuItems;
-    });
-    this.subscriptions.push(menuSub);
-  }
-
-  private getDefaultMenuItems(): MenuItem[] {
-    return [
-      {
-        id: 'home',
-        label: 'Dashboard',
-        icon: '🏠',
-        route: '/dashboard/home'
-      },
-      {
-        id: 'profile',
-        label: 'Profile',
-        icon: '👤',
-        route: '/dashboard/profile'
-      }
-    ];
   }
 
   toggleSidenav() {
     this.isSidenavCollapsed = !this.isSidenavCollapsed;
   }
-
-  toggleMenuItem(item: MenuItem) {
-    if (item.children && item.children.length > 0) {
-      this.menuService.toggleMenuItem(item.id);
-    } else if (item.route) {
-      this.navigateToRoute(item.route);
-    } else if (item.url) {
-      this.openExternalUrl(item.url, item.target);
-    }
+ navigate(url: string) {
+    // Remove leading slash to make it relative navigation
+    const relativePath = url.startsWith('/') ? url.substring(1) : url;
+    this.router.navigate([relativePath], { relativeTo: this.route });
   }
-
-  private navigateToRoute(route: string) {
-    this.router.navigate([route]);
-  }
-
-  private openExternalUrl(url: string, target: string = '_blank') {
-    window.open(url, target);
-  }
-
-  isMenuItemActive(item: MenuItem): boolean {
-    if (!item.route) return false;
-    return this.router.url === item.route || this.router.url.startsWith(item.route + '/');
-  }
-
-  hasMenuPermission(item: MenuItem): boolean {
-    if (!item.permissions || item.permissions.length === 0) {
-      return true;
-    }
-
-    return item.permissions.some(permission => 
-      this.authService.hasPermission(permission)
-    );
-  }
-
-  refreshMenu() {
-    this.loadMenu();
-  }
-
+ 
   // logout() {
   //   const logoutSub = this.authService.logout().subscribe({
   //     next: () => {
@@ -186,52 +153,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Method to handle menu item badge updates
-  updateMenuBadge(itemId: string, badge: { text: string; color: string } | null) {
-    this.menuService.updateMenuBadge(itemId, badge);
-  }
+ 
 
-  // Method to get menu item by ID
-  getMenuItem(itemId: string): MenuItem | null {
-    return this.menuService.findMenuItem(itemId);
-  }
-
-  // Method to check if a menu item should be visible
-  isMenuItemVisible(item: MenuItem): boolean {
-    if (item.visible === false) {
-      return false;
-    }
-
-    // Check role requirements
-    if (item.roles && item.roles.length > 0) {
-      const hasRole = item.roles.some(role => this.hasRole(role));
-      if (!hasRole) {
-        return false;
-      }
-    }
-
-    // Check permission requirements
-    if (item.permissions && item.permissions.length > 0) {
-      const hasPermission = item.permissions.some(permission => 
-        this.hasPermission(permission)
-      );
-      if (!hasPermission) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  // Method to get visible menu items
-  getVisibleMenuItems(): MenuItem[] {
-    return this.menuItems.filter(item => this.isMenuItemVisible(item));
-  }
-
-  // Method to get visible children for a menu item
-  getVisibleChildren(item: MenuItem): MenuItem[] {
-    if (!item.children) {
-      return [];
-    }
-    return item.children.filter(child => this.isMenuItemVisible(child));
-  }
 }

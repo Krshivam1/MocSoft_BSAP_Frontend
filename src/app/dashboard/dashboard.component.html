@@ -29,35 +29,49 @@
         <p>Loading menu...</p>
       </div>
       <ul *ngIf="!isLoadingMenu" class="nav-menu">
-        <li *ngFor="let item of getVisibleMenuItems()" class="nav-item">
-          <a
-            class="nav-link"
-            [class.has-children]="item.children"
-            (click)="toggleMenuItem(item)"
-          >
-            <span class="nav-icon">{{ item.icon }}</span>
-            <span class="nav-label" [class.hidden]="isSidenavCollapsed">{{ item.label }}</span>
-            <span
-              *ngIf="item.children && !isSidenavCollapsed"
-              class="expand-icon"
-              [class.expanded]="item.expanded"
+        <ng-container *ngFor="let menu of menuData">
+          <li class="nav-item">
+            <div 
+              class="nav-link collapsible-menu"
+              [class.expanded]="expandedMenus[menu.id]"
+              (click)="menu.children && menu.children.length ? toggleMenu(menu.id) : (menu.url && menu.url !== '#' ? navigate(menu.url) : null)"
+              [class.has-children]="menu.children && menu.children.length"
+              style="text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"
             >
-              ▼
-            </span>
-          </a>
-          
-          <ul
-            *ngIf="item.children && item.expanded && !isSidenavCollapsed"
-            class="sub-menu"
-          >
-            <li *ngFor="let child of getVisibleChildren(item)" class="sub-item">
-              <a class="sub-link" (click)="toggleMenuItem(child)">
-                <span class="nav-icon">{{ child.icon }}</span>
-                <span class="nav-label">{{ child.label }}</span>
-              </a>
-            </li>
-          </ul>
-        </li>
+              <span class="nav-label">{{ menu.name }}</span>
+              <span class="nav-icon">
+                <span *ngIf="menu.children && menu.children.length" class="expand-icon" [class.expanded]="expandedMenus[menu.id]">&#9660;</span>
+              </span>
+            </div>
+            <ul *ngIf="menu.children && menu.children.length && expandedMenus[menu.id]" class="sub-menu">
+              <ng-container *ngFor="let submenu of menu.children">
+                <li class="sub-item">
+                  <div 
+                    class="nav-link collapsible-menu"
+                    [class.expanded]="expandedSubmenus[submenu.id]"
+                    (click)="submenu.children && submenu.children.length ? toggleSubmenu(submenu.id) : (submenu.url && submenu.url !== '#' ? navigate(submenu.url) : null)"
+                    [class.has-children]="submenu.children && submenu.children.length"
+                    style="text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"
+                  >
+                    <span class="nav-label">{{ submenu.name }}</span>
+                    <span class="nav-icon">
+                      <span *ngIf="submenu.children && submenu.children.length" class="expand-icon" [class.expanded]="expandedSubmenus[submenu.id]">&#9654;</span>
+                    </span>
+                  </div>
+                  <ul *ngIf="submenu.children && submenu.children.length && expandedSubmenus[submenu.id]" class="sub-menu">
+                    <ng-container *ngFor="let subchild of submenu.children">
+                      <li class="sub-item">
+                        <div class="sub-link" style="text-align:left; cursor:pointer;" (click)="subchild.url && subchild.url !== '#' ? navigate(subchild.url) : null">
+                          {{ subchild.name }}
+                        </div>
+                      </li>
+                    </ng-container>
+                  </ul>
+                </li>
+              </ng-container>
+            </ul>
+          </li>
+        </ng-container>
       </ul>
     </div>
   </nav>
