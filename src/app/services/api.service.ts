@@ -25,7 +25,7 @@ export class ApiService {
 
   get_user_menu(): Observable<any> {
     return this.http.get(
-        this.baseUrl + "menus/user/2",
+        this.baseUrl + "menus/user",
       { headers: this.headersWithToken = this.getHeaders() }
     );
   }

@@ -1,0 +1,344 @@
+.role-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Header Section */
+.header-section {
+  margin-bottom: 30px;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1976d2;
+}
+
+.title-text h2 {
+  color: #333;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.title-text p {
+  color: #666;
+  margin: 5px 0 0 0;
+  font-size: 14px;
+}
+
+/* Controls Section */
+.controls-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.add-role-btn {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.add-role-btn:hover {
+  background-color: #138496;
+}
+
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.show-entries {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.show-entries select {
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.search-box input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 200px;
+}
+
+/* Table Section */
+.table-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.roles-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+.roles-table th,
+.roles-table td {
+  width: 25%; /* Equal width for all 4 columns */
+}
+
+.roles-table th {
+  background-color: #f8f9fa;
+  color: #333;
+  font-weight: 600;
+  padding: 15px 12px;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  width: 25%; /* Equal width for all columns */
+  box-sizing: border-box;
+}
+
+.roles-table th:hover {
+  background-color: #e9ecef;
+}
+
+.sort-icon {
+  margin-left: 5px;
+  color: #999;
+}
+
+.sort-icon.active {
+  color: #007bff;
+}
+
+.roles-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+  width: 25%; /* Equal width for all columns */
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.roles-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.roles-table tbody tr.even {
+  background-color: #fff;
+}
+
+.roles-table tbody tr.odd {
+  background-color: #f9f9f9;
+}
+
+.roles-table tbody tr.even:hover,
+.roles-table tbody tr.odd:hover {
+  background-color: #f1f3f4;
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.view-btn,
+.deactivate-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.view-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.view-btn:hover {
+  background-color: #0056b3;
+}
+
+.deactivate-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.deactivate-btn:hover {
+  background-color: #c82333;
+}
+
+/* No Data Message */
+.no-data {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 30px;
+}
+
+/* Pagination Section */
+.pagination-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.page-btn {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.page-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.page-btn:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  border-color: #dee2e6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .controls-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .table-controls {
+    justify-content: space-between;
+  }
+  
+  .search-box input {
+    width: 150px;
+  }
+  
+  .pagination-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .view-btn,
+  .deactivate-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .role-container {
+    padding: 15px;
+  }
+  
+  .title-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .roles-table {
+    font-size: 12px;
+  }
+  
+  .roles-table th,
+  .roles-table td {
+    padding: 8px;
+  }
+  
+  .search-box input {
+    width: 120px;
+  }
+}

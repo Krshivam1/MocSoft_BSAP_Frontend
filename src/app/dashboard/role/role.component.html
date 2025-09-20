@@ -1,0 +1,137 @@
+<div class="role-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="title-section">
+      <div class="icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div class="title-text">
+        <h2>List Of Role</h2>
+        <p>All Roles Of User To Give Access To Them</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Section -->
+  <div class="controls-section">
+    <button class="add-role-btn" (click)="addRole()">
+      Add Role
+    </button>
+    
+    <div class="table-controls">
+      <div class="show-entries">
+        <label>Show</label>
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+        <label>entries</label>
+      </div>
+      
+      <div class="search-box">
+        <label>Search:</label>
+        <input type="text" 
+               [(ngModel)]="searchTerm" 
+               (input)="onSearch()" 
+               placeholder="Search roles...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-section">
+    <table class="roles-table">
+      <thead>
+        <tr>
+          <th (click)="sortTable('id')">
+            Id
+            <span class="sort-icon" [class.active]="sortColumn === 'id'">
+              <i class="fas fa-sort" *ngIf="sortColumn !== 'id'"></i>
+              <i class="fas fa-sort-up" *ngIf="sortColumn === 'id' && sortDirection === 'asc'"></i>
+              <i class="fas fa-sort-down" *ngIf="sortColumn === 'id' && sortDirection === 'desc'"></i>
+            </span>
+          </th>
+          <th (click)="sortTable('roleName')">
+            Role Name
+            <span class="sort-icon" [class.active]="sortColumn === 'roleName'">
+              <i class="fas fa-sort" *ngIf="sortColumn !== 'roleName'"></i>
+              <i class="fas fa-sort-up" *ngIf="sortColumn === 'roleName' && sortDirection === 'asc'"></i>
+              <i class="fas fa-sort-down" *ngIf="sortColumn === 'roleName' && sortDirection === 'desc'"></i>
+            </span>
+          </th>
+          <th (click)="sortTable('active')">
+            Active
+            <span class="sort-icon" [class.active]="sortColumn === 'active'">
+              <i class="fas fa-sort" *ngIf="sortColumn !== 'active'"></i>
+              <i class="fas fa-sort-up" *ngIf="sortColumn === 'active' && sortDirection === 'asc'"></i>
+              <i class="fas fa-sort-down" *ngIf="sortColumn === 'active' && sortDirection === 'desc'"></i>
+            </span>
+          </th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let role of paginatedRoles; let i = index" 
+            [class.even]="i % 2 === 0" 
+            [class.odd]="i % 2 === 1">
+          <td>{{ role.id }}</td>
+          <td>{{ role.roleName }}</td>
+          <td>
+            <span class="status-badge" [class.active]="role.active" [class.inactive]="!role.active">
+              {{ role.active ? 'Yes' : 'No' }}
+            </span>
+          </td>
+          <td class="action-buttons">
+            <button class="view-btn" (click)="viewRole(role)" title="View Role">
+              View
+            </button>
+            <button class="deactivate-btn" 
+                    (click)="toggleRoleStatus(role)" 
+                    [title]="role.active ? 'Deactivate Role' : 'Activate Role'">
+              {{ role.active ? 'Deactivate' : 'Activate' }}
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="paginatedRoles.length === 0">
+          <td colspan="4" class="no-data">No roles found matching your search criteria.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Section -->
+  <div class="pagination-section" *ngIf="totalRoles > 0">
+    <div class="pagination-info">
+      Showing {{ getStartRecord() }} to {{ getEndRecord() }} of {{ totalRoles }} entries
+      <span *ngIf="searchTerm"> (filtered from {{ originalTotalRoles }} total entries)</span>
+    </div>
+    
+    <div class="pagination-controls">
+      <button class="page-btn" 
+              [disabled]="currentPage === 1" 
+              (click)="goToPage(currentPage - 1)">
+        Previous
+      </button>
+      
+      <button *ngFor="let page of getVisiblePages()" 
+              class="page-btn" 
+              [class.active]="page === currentPage"
+              (click)="goToPage(page)">
+        {{ page }}
+      </button>
+      
+      <button class="page-btn" 
+              [disabled]="currentPage === getTotalPages()" 
+              (click)="goToPage(currentPage + 1)">
+        Next
+      </button>
+    </div>
+  </div>
+</div>
