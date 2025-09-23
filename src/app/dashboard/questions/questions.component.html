@@ -1,4 +1,252 @@
-<div class="questions-container">
-  <h2>Questions Management</h2>
-  <p>Questions management functionality will be implemented here.</p>
+<div class="dashboardContent">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="pe-7s-monitor icon-gradient"></i>
+      </div>
+      <div class="header-text">
+        <h1>Question Management</h1>
+        <p>Manage and organize all questions in the system</p>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="ADQSTN">
+      <button type="button" class="btn btn-primary btn-add" 
+              data-bs-toggle="modal" data-bs-target="#addQuestionModal"
+              (click)="openAddModal()">
+        <i class="fas fa-plus"></i> Add Question
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-question-circle"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{questions.length}}</h3>
+        <p>Total Questions</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon active">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{getActiveQuestionsCount()}}</h3>
+        <p>Active Questions</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon inactive">
+        <i class="fas fa-pause-circle"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{getInactiveQuestionsCount()}}</h3>
+        <p>Inactive Questions</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-section">
+    <div class="section-header">
+      <h2>Questions List</h2>
+      <div class="table-controls">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search questions..." (input)="filterQuestions($event)">
+        </div>
+        <div class="filter-controls">
+          <select class="form-control" (change)="filterByStatus($event)">
+            <option value="all">All Status</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+   <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Topic</th>
+          <th>SubTopic</th>
+          <th>Question</th>
+          <th>Formula</th>
+          <th>Type</th>
+          <th>Priority</th>
+          <th>Default Value</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let q of filteredQuestions">
+          <td class="id-column">{{q.id}}</td>
+          <td class="topic-column">{{q.topicName}}</td>
+          <td class="subtopic-column">{{q.subTopicName || '-'}}</td>
+          <td class="question-column">
+            <div class="question-text">{{q.name}}</div>
+          </td>
+          <td class="formula-column">
+            <div class="formula-content" *ngIf="q.formula && q.formula !== ''">
+              <span class="formula-badge">
+                <i class="fas fa-calculator"></i>
+                {{q.formula}}
+              </span>
+            </div>
+            <div class="no-formula" *ngIf="!q.formula || q.formula === ''">
+              <span class="text-muted">No formula</span>
+            </div>
+          </td>
+          <td class="type-column">
+            <span class="type-badge" [ngClass]="'type-' + q.type?.toLowerCase()">{{q.type}}</span>
+          </td>
+          <td class="priority-column">
+            <span class="priority-badge" [ngClass]="getPriorityClass(q.priority)">{{q.priority}}</span>
+          </td>
+          <td class="default-column">
+            <span class="default-badge" *ngIf="q.default && q.default !== 'NONE'">{{q.default}}</span>
+            <span class="text-muted" *ngIf="!q.default || q.default === 'NONE'">-</span>
+          </td>
+          <td class="status-column">
+            <span class="status-badge" [ngClass]="q.active ? 'active' : 'inactive'">
+              {{q.active ? 'Active' : 'Inactive'}}
+            </span>
+          </td>
+          <td class="actions-column">
+            <button type="button" class="btn btn-sm btn-edit" 
+                    (click)="openEditModal(q)" *ngIf="EDQSTN">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="no-results" *ngIf="filteredQuestions.length === 0">
+      <i class="fas fa-search"></i>
+      <p>No questions found matching your criteria</p>
+    </div>
+  </div>
+  </div>
+
+  <!-- Add/Edit Question Modal -->
+  <div class="modal fade" id="addQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form (ngSubmit)="saveQuestion()" #addQuestionForm="ngForm">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
+              {{ isEditMode ? 'Edit Question' : 'Add New Question' }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="topicId">Topic <span class="required">*</span></label>
+                <select class="form-control" id="topicId"
+                        required
+                        [(ngModel)]="newQuestion.topicId"
+                        name="topicId"
+                        (change)="onTopicChange()">
+                  <option value="">Select Topic</option>
+                  <option *ngFor="let t of topics" [value]="t.id">{{t.topicName}}</option>
+                </select>
+              </div>
+
+              <div class="form-group col-md-6">
+                <label for="subtopicId">SubTopic</label>
+                <select class="form-control" id="subtopicId"
+                        [(ngModel)]="newQuestion.subtopicId"
+                        name="subtopicId">
+                  <option value="">Select SubTopic</option>
+                  <option *ngFor="let st of subtopics" [value]="st.id">{{st.subTopicName}}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="questionName">Question <span class="required">*</span></label>
+              <input type="text" class="form-control" id="questionName"
+                     [(ngModel)]="newQuestion.name"
+                     name="name" required placeholder="Enter the question text">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label for="priority">Priority <span class="required">*</span></label>
+                <input type="number" min="0" class="form-control" id="priority"
+                       [(ngModel)]="newQuestion.priority"
+                       name="priority" required>
+                <small class="form-text text-muted">Lower numbers = higher priority</small>
+              </div>
+
+              <div class="form-group col-md-4">
+                <label for="type">Type <span class="required">*</span></label>
+                <select class="form-control" id="type"
+                        [(ngModel)]="newQuestion.type"
+                        name="type" required>
+                  <option value="Text">Text</option>
+                  <option value="Date">Date</option>
+                  <option value="Number">Number</option>
+                  <option value="Price">Price</option>
+                  <option value="MultiChoice">MultiChoice</option>
+                </select>
+              </div>
+
+              <div class="form-group col-md-4">
+                <label for="default">Default Value</label>
+                <select class="form-control" id="default"
+                        [(ngModel)]="newQuestion.default"
+                        name="default"
+                        (change)="onDefaultChange()">
+                  <option value="NONE">NONE</option>
+                  <option value="PREVIOUS">PREVIOUS</option>
+                  <option value="QUESTION">QUESTION</option>
+                  <option value="PS">PS</option>
+                  <option value="SUB">Subdivision</option>
+                  <option value="CIRCLE">Circle</option>
+                  <option value="PSOP">PS/OP</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="formula">Formula (Optional)</label>
+              <input type="text" class="form-control" id="formula"
+                     [(ngModel)]="newQuestion.formula"
+                     name="formula"
+                     placeholder="e.g. q1+q2">
+              <small class="form-text text-muted">Use IDs of other questions (example: q11 + q12)</small>
+            </div>
+
+            <div class="form-group" *ngIf="isEditMode">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="active"
+                       [(ngModel)]="newQuestion.active" name="active">
+                <label class="form-check-label" for="active">Active Question</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="!addQuestionForm.form.valid">
+              <i class="fas fa-save"></i> {{ isEditMode ? 'Update' : 'Save' }} Question
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 </div>

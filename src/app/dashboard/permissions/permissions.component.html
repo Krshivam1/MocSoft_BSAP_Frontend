@@ -1,4 +1,158 @@
-<div class="permissions-container">
-  <h2>Permissions Management</h2>
-  <p>Permissions management functionality will be implemented here.</p>
+<div class="dashboardContent" id="dashboardContent">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading d-flex align-items-center">
+        <div class="page-title-icon me-3">
+          <i class="fas fa-tv"></i>
+        </div>
+        <div>
+          <h2 class="mb-1">List Of Permissions</h2>
+          <div class="page-title-subheading">
+            All Permissions Of User To Give Access to user interface
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Permission Button -->
+  <div class="row" *ngIf="addPermissionVisible">
+    <div class="col-12">
+      <button class="btn btn-outline-success" (click)="openAddModal()">
+        Add Permission
+      </button>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- Permission List -->
+  <div class="row">
+    <div class="col-12">
+      <div class="table-panel">
+        <table class="table table-striped table-bordered table-sm">
+          <thead>
+            <tr>
+              <td>Id</td>
+              <td>Permission Name</td>
+              <td>Permission Code</td>
+              <td>Permission For URL</td>
+              <td>Active</td>
+              <td>Edit</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let per of permissions">
+              <td>{{ per.id }}</td>
+              <td>{{ per.name }}</td>
+              <td>{{ per.code }}</td>
+              <td>{{ per.url }}</td>
+              <td>
+                <span
+                  [ngClass]="{
+                    'text-success': per.active,
+                    'text-danger': !per.active
+                  }"
+                >
+                  {{ per.active ? "Yes" : "No" }}
+                </span>
+              </td>
+              <td>
+                <button
+                  class="btn btn-sm btn-primary"
+                  (click)="openEditModal(per)"
+                >
+                  Edit
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="permissions.length === 0">
+              <td colspan="6" class="text-center text-muted">
+                No Permissions Found
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Permission Modal -->
+<div id="permissionModal" class="modal" style="display: none">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div
+        class="modal-header d-flex justify-content-between align-items-center"
+      >
+        <h5 class="modal-title mb-0">
+          {{ isEditMode ? "Edit Permission" : "Add Permission" }}
+        </h5>
+        <button
+          type="button"
+          class="close btn btn-light border-0 p-0"
+          (click)="closeModal()"
+          aria-label="Close"
+          style="font-size: 1.5rem; line-height: 1"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form (ngSubmit)="savePermission()" #permissionForm="ngForm">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input
+              id="name"
+              name="name"
+              [(ngModel)]="newPermission.name"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="code">Code</label>
+            <input
+              id="code"
+              name="code"
+              [(ngModel)]="newPermission.code"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="url">URL</label>
+            <input
+              id="url"
+              name="url"
+              [(ngModel)]="newPermission.url"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <!-- Footer -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="closeModal()"
+            >
+              Close
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="!permissionForm.valid"
+            >
+              {{ isEditMode ? "Update" : "Save" }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>

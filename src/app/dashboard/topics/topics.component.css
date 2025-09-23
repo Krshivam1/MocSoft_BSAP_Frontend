@@ -1,8 +1,48 @@
-.topics-container {
-  padding: 20px;
+.table td, .table th {
+  vertical-align: middle;
 }
 
-.topics-container h2 {
-  color: #333;
-  margin-bottom: 20px;
+.modal {
+  background: rgba(0,0,0,0.5);
 }
+.table td, .table th {
+  vertical-align: middle;
+}
+
+.modal {
+  background: rgba(0,0,0,0.5);
+}
+/* Add some nice gradient for modal header */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+}
+
+/* Modal overlay */
+.custom-modal {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+/* Form elements hover/focus */
+.form-control:focus, .form-select:focus {
+  border-color: #00c6ff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 198, 255, 0.25);
+}
+
+/* Labels */
+.form-label {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Buttons */
+.btn-success {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border: none;
+}
+.btn-success:hover {
+  background: linear-gradient(135deg, #218838, #17a2b8);
+}
+
+
+
