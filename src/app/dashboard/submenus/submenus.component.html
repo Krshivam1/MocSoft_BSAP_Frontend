@@ -1,4 +1,144 @@
-<div class="submenus-container">
-  <h2>Submenus Management</h2>
-  <p>Submenus management functionality will be implemented here.</p>
+<div class="dashboardContent" id="dashboardContent">
+  <div class="app-page-title">
+        <div class="page-title-wrapper">
+    <div class="page-title-heading d-flex align-items-center">
+      <div class="page-title-icon me-3">
+          <i class="fas fa-tv"></i>
+      </div>
+      <div>
+        <h2 class="mb-1">List Of Sub Menu</h2>
+        <div class="page-title-subheading">All Sub Menus Of User To Give Access To Them</div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Add Sub Menu Button -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <button class="btn btn-outline-success" (click)="openAddModal()">Add Sub Menu</button>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="table-panel">
+        <table class="table table-striped table-bordered table-sm submenu-table">
+          <thead>
+            <tr>
+              <td>Id</td>
+              <td>Menu Name</td>
+              <td>SubMenu Name</td>
+              <td>SubMenu Url</td>
+              <td>Priority</td>
+              <td>Active</td>
+              <td>Edit</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let submenu of submenus">
+              <td>{{ submenu.id }}</td>
+              <td>{{ getMenuName(submenu.menuId) }}</td>
+
+              <td>{{ submenu.name }}</td>
+              <td>{{ submenu.url }}</td>
+              <td>{{ submenu.priority }}</td>
+              <td>
+                <span [ngClass]="{ 'text-success': submenu.active, 'text-danger': !submenu.active }">
+                  {{ submenu.active ? 'Yes' : 'No' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-primary" (click)="openEditModal(submenu)">Edit</button>
+              </td>
+            </tr>
+            <tr *ngIf="submenus.length === 0">
+              <td colspan="7" class="text-center text-muted">No Sub Menus Found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal" tabindex="-1" [ngClass]="{ 'd-block': addVisible }" style="background: rgba(0,0,0,0.5);" *ngIf="addVisible">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form (ngSubmit)="saveSubmenu()">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Sub Menu</h5>
+          <button type="button" class="close btn" (click)="closeAddModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group mb-2">
+            <label>Menu</label>
+            <select class="form-control" [(ngModel)]="newSubmenu.menuId" name="menuId" required>
+              <option [ngValue]="null">Select Menu</option>
+              <option *ngFor="let m of menus" [ngValue]="m.id">{{ m.menuName }}</option>
+            </select>
+          </div>
+          <div class="form-group mb-2">
+            <label>Name</label>
+            <input class="form-control" [(ngModel)]="newSubmenu.name" name="name" required />
+          </div>
+          <div class="form-group mb-2">
+            <label>URL</label>
+            <input class="form-control" [(ngModel)]="newSubmenu.url" name="url" required />
+          </div>
+          <div class="form-group mb-2">
+            <label>Priority</label>
+            <input type="number" class="form-control" [(ngModel)]="newSubmenu.priority" name="priority" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Close</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" tabindex="-1" [ngClass]="{ 'd-block': editVisible }" style="background: rgba(0,0,0,0.5);" *ngIf="editVisible">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form (ngSubmit)="updateSubmenu()">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Sub Menu</h5>
+          <button type="button" class="close btn" (click)="closeEditModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group mb-2">
+            <label>Menu</label>
+            <select class="form-control" [(ngModel)]="editSubmenu.menuId" name="menuIdE" required>
+              <option [ngValue]="null">Select Menu</option>
+              <option *ngFor="let m of menus" [ngValue]="m.id">{{ m.menuName }}</option>
+            </select>
+          </div>
+          <div class="form-group mb-2">
+            <label>Name</label>
+            <input class="form-control" [(ngModel)]="editSubmenu.name" name="nameE" required />
+          </div>
+          <div class="form-group mb-2">
+            <label>URL</label>
+            <input class="form-control" [(ngModel)]="editSubmenu.url" name="urlE" required />
+          </div>
+          <div class="form-group mb-2">
+            <label>Priority</label>
+            <input type="number" class="form-control" [(ngModel)]="editSubmenu.priority" name="priorityE" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Close</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

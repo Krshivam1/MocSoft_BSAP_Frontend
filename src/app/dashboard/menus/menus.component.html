@@ -1,4 +1,140 @@
-<div class="menus-container">
-  <h2>Menus Management</h2>
-  <p>Menus management functionality will be implemented here.</p>
+<div class="dashboardContent" id="dashboardContent">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+ <div class="page-title-heading d-flex align-items-center">
+  <div class="page-title-icon me-3">
+    <i class="fas fa-tv"></i>
+  </div>
+  <div>
+    <h2 class="mb-1">List Of Menus</h2>
+    <div class="page-title-subheading">
+      All Menus Of User To Give Access to Them
+    </div>
+  </div>
+</div>
+    </div>
+  </div>
+
+  <!-- Add Menu Button -->
+  <div class="row" *ngIf="addMenuVisible">
+    <div class="col-12">
+      <button class="btn btn-outline-success" (click)="openAddModal()">Add Menu</button>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- Menu List -->
+  <div class="row">
+    <div class="col-12">
+      <div class="table-panel">
+        <table class="table table-striped table-bordered table-sm">
+          <thead>
+            <tr>
+              <td>Id</td>
+              <td>Menu Name</td>
+              <td>Menu Url</td>
+              <td>Menu Priority</td>
+              <td>Active</td>
+              <td>Edit</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let menu of menus">
+              <td>{{ menu.id }}</td>
+              <td>{{ menu.name }}</td>
+              <td>{{ menu.url }}</td>
+              <td>{{ menu.priority }}</td>
+              <td>
+                <span [ngClass]="{ 'text-success': menu.active, 'text-danger': !menu.active }">
+                  {{ menu.active ? 'Yes' : 'No' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-primary" (click)="openEditModal(menu)">Edit</button>
+              </td>
+            </tr>
+            <tr *ngIf="menus.length === 0">
+              <td colspan="6" class="text-center text-muted">No Menus Found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Menu Modal -->
+<div id="menuAddModal" class="modal" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header d-flex justify-content-between align-items-center">
+        <h5 class="modal-title mb-0">Add Menu</h5>
+        <button type="button" class="close btn btn-light border-0 p-0" (click)="closeAddModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form (ngSubmit)="saveMenu()" #addMenuForm="ngForm">
+          <div class="form-group">
+            <label for="menuName">Name</label>
+            <input id="menuName" name="menuName" [(ngModel)]="newMenu.name" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="menuURL">URL</label>
+            <input id="menuURL" name="menuURL" [(ngModel)]="newMenu.url" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="menuPriority">Priority</label>
+            <input type="number" id="menuPriority" name="menuPriority" [(ngModel)]="newMenu.priority" class="form-control" required />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Close</button>
+            <button type="submit" class="btn btn-primary" [disabled]="!addMenuForm.valid">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Menu Modal -->
+<div id="menuEditModal" class="modal" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header d-flex justify-content-between align-items-center">
+        <h5 class="modal-title mb-0">Edit Menu</h5>
+        <button type="button" class="close btn btn-light border-0 p-0" (click)="closeEditModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form (ngSubmit)="updateMenu()" #editMenuForm="ngForm">
+          <input type="hidden" [(ngModel)]="editMenu.id" name="menuId" />
+          <div class="form-group">
+            <label for="menuNameE">Name</label>
+            <input id="menuNameE" name="menuNameE" [(ngModel)]="editMenu.name" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="menuURLE">URL</label>
+            <input id="menuURLE" name="menuURLE" [(ngModel)]="editMenu.url" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="menuPriorityE">Priority</label>
+            <input type="number" id="menuPriorityE" name="menuPriorityE" [(ngModel)]="editMenu.priority" class="form-control" required />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Close</button>
+            <button type="submit" class="btn btn-primary" [disabled]="!editMenuForm.valid">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>

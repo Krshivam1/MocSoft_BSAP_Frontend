@@ -1,4 +1,92 @@
-<div class="modules-container">
-  <h2>Modules Management</h2>
-  <p>Modules management functionality will be implemented here.</p>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-primary fw-bold">📊 List of Modules</h2>
+    <button class="btn btn-success" (click)="openAddModal()">+ Add Module</button>
+  </div>
+
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle">
+      <thead class="table-primary">
+        <tr>
+          <th>Id</th>
+          <th>Module Name</th>
+          <th>Priority</th>
+          <th>Active</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of modules">
+          <td>{{ m.id }}</td>
+          <td>{{ m.name }}</td>
+          <td>{{ m.priority }}</td>
+          <td>
+            <span class="badge" [ngClass]="m.active ? 'bg-success' : 'bg-danger'">
+              {{ m.active ? 'Yes' : 'No' }}
+            </span>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-primary me-2" (click)="openEditModal(m)">Edit</button>
+            <button class="btn btn-sm btn-danger" (click)="deactivateModule(m.id)">Deactivate</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Module Modal -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showAddModal" style="background: rgba(0,0,0,0.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form #addForm="ngForm" (ngSubmit)="saveModule({id:0, name:addForm.value.name, priority:addForm.value.priority, active:true})">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Module</h5>
+          <button type="button" class="btn-close" (click)="showAddModal=false"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" ngModel class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <input type="number" name="priority" ngModel class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showAddModal=false">Close</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Module Modal -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showEditModal" style="background: rgba(0,0,0,0.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form (ngSubmit)="updateModule()">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Module</h5>
+          <button type="button" class="btn-close" (click)="showEditModal=false"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" [(ngModel)]="editModuleData!.name" name="nameE" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <input type="number" [(ngModel)]="editModuleData!.priority" name="priorityE" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showEditModal=false">Close</button>
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

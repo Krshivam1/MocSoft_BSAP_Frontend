@@ -6,3 +6,54 @@
   color: #333;
   margin-bottom: 20px;
 }
+.page-title-icon i {
+  font-size: 50px;      /* make icon bigger */
+  color: #ff6600;       /* nice orange color */
+}
+.modal-dialog {
+  max-width: 500px;
+  margin: 30px auto;
+}
+
+.modal-header .close {
+  font-size: 1.5rem;
+}
+.btn {
+  margin: 5px 5px;
+}
+
+.btn-outline-success {
+  margin-bottom: 15px;
+}
+.table-panel {
+  margin-top: 15px;
+  overflow-x: auto;
+}
+
+.table th,
+.table td {
+  padding: 10px 15px;      /* more spacing */
+}
+
+.table td button {
+  min-width: 60px;
+}
+.page-title-icon i {
+  font-size: 50px;  /* larger icon */
+  color: #ff6600;
+}
+
+.page-title-heading h2 {
+  margin: 0; /* remove extra margin */
+}
+
+.page-title-subheading {
+  margin-top: 4px; /* small spacing below heading */
+  font-size: 14px;
+  color: #6c757d; /* softer subheading color */
+}
+.app-page-title {
+  padding: 20px 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
