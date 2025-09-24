@@ -1,8 +1,55 @@
-.questions-container {
+/* Questions component uses global-table.css styles */
+
+/* Additional styles for question-specific elements */
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.checkbox-row {
+  align-items: center;
+}
+
+.checkbox-row .form-group {
+  flex: none;
+  margin-right: 20px;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.no-data {
+  text-align: center;
+  color: #666;
+  font-style: italic;
   padding: 20px;
 }
 
-.questions-container h2 {
-  color: #333;
-  margin-bottom: 20px;
+.loading {
+  text-align: center;
+  color: #007bff;
+  font-style: italic;
+  padding: 20px;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+.delete-btn:hover {
+  background: #c82333;
 }

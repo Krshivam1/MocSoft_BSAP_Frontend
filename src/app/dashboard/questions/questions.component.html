@@ -1,4 +1,291 @@
-<div class="questions-container">
-  <h2>Questions Management</h2>
-  <p>Questions management functionality will be implemented here.</p>
+<div class="data-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="title-section">
+      <div class="icon">❓</div>
+      <h1>List Of Questions</h1>
+    </div>
+    <button class="add-btn" (click)="openAddModal()">Add Question</button>
+  </div>
+
+  <!-- Table Controls -->
+  <div class="table-controls">
+    <div class="show-entries">
+      <span>Show</span>
+      <select [(ngModel)]="entriesPerPage" (change)="onEntriesPerPageChange()">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      <span>entries</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Topic Name</th>
+          <th>SubTopic Name</th>
+          <th>Question Name</th>
+          <th>Default Value</th>
+          <th>Formula</th>
+          <th>Priority</th>
+          <th>Active</th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading">
+          <td colspan="9" class="loading">Loading questions...</td>
+        </tr>
+        <tr *ngFor="let question of questions; trackBy: trackByQuestionId" [hidden]="loading">
+          <td>{{question.id}}</td>
+          <td>{{getTopicName(question)}}</td>
+          <td>{{getSubTopicName(question)}}</td>
+          <td>{{question.question}}</td>
+          <td>{{question.defaultVal || 'NONE'}}</td>
+          <td>{{question.formula || ''}}</td>
+          <td>
+            <span class="priority-badge">{{question.priority || 0}}</span>
+          </td>
+          <td>
+            <span class="status-badge" [class.active]="question.active" [class.inactive]="!question.active">
+              {{question.active ? 'YES' : 'NO'}}
+            </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="edit-btn" (click)="editQuestion(question)">Edit</button>
+              <button 
+                class="deactivate-btn" 
+                [class.activate]="!question.active"
+                (click)="toggleQuestionStatus(question)"
+              >
+                {{question.active ? 'Deactivate' : 'Activate'}}
+              </button>
+              <!-- <button class="delete-btn" (click)="deleteQuestion(question)">Delete</button> -->
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="questions.length === 0 && !loading">
+          <td colspan="9" class="no-data">No questions found matching your search criteria.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container" *ngIf="totalRecords > 0">
+    <div class="pagination-info">
+      Showing {{getStartEntry()}} to {{getEndEntry()}} of {{totalRecords}} entries
+    </div>
+    <nav aria-label="Table pagination">
+      <div class="pagination">
+        <button 
+          class="page-btn" 
+          [disabled]="currentPage === 1" 
+          (click)="goToPage(currentPage - 1)"
+          aria-label="Previous page"
+        >
+          Previous
+        </button>
+        <button 
+          *ngFor="let page of getPageNumbers()" 
+          class="page-btn" 
+          [class.active]="page === currentPage"
+          [class.ellipsis]="page === -1"
+          [disabled]="page === -1"
+          (click)="page !== -1 ? goToPage(page) : null"
+          [attr.aria-label]="page === -1 ? 'More pages' : 'Page ' + page"
+          [attr.aria-current]="page === currentPage ? 'page' : null"
+        >
+          {{page === -1 ? '...' : page}}
+        </button>
+        <button 
+          class="page-btn" 
+          [disabled]="currentPage === getTotalPages()" 
+          (click)="goToPage(currentPage + 1)"
+          aria-label="Next page"
+        >
+          Next
+        </button>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{isEditing ? 'Edit Question' : 'Add Question'}}</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form #questionForm="ngForm">
+        <div class="form-group">
+          <label for="topicSelect">Topic <span class="required">*</span></label>
+          <select 
+            id="topicSelect"
+            class="form-control"
+            [(ngModel)]="formData.topicId" 
+            name="topicId"
+            required
+            (change)="onTopicChange()"
+            [disabled]="loadingTopics"
+          >
+            <option value="">{{loadingTopics ? 'Loading topics...' : 'Select Topic'}}</option>
+            <option *ngFor="let topic of topics" [value]="topic.id">{{topic.topicName}}</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="subTopicSelect">SubTopic</label>
+          <select 
+            id="subTopicSelect"
+            class="form-control"
+            [(ngModel)]="formData.subTopicId" 
+            name="subTopicId"
+            [disabled]="!formData.topicId || loadingSubTopics"
+          >
+            <option value="">{{loadingSubTopics ? 'Loading sub-topics...' : 'Select SubTopic'}}</option>
+            <option *ngFor="let subTopic of filteredSubTopics" [value]="subTopic.id">{{subTopic.subTopicName}}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="questionName">Question <span class="required">*</span></label>
+          <textarea 
+            id="questionName"
+            class="form-control"
+            [(ngModel)]="formData.question" 
+            name="question"
+            required
+            placeholder="Enter question text"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="priority">Priority</label>
+          <input 
+            type="number" 
+            id="priority"
+            class="form-control"
+            [(ngModel)]="formData.priority" 
+            name="priority"
+            min="1"
+            placeholder="Enter priority"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="type">Question Type</label>
+          <select 
+            id="type"
+            class="form-control"
+            [(ngModel)]="formData.type" 
+            name="type"
+          >
+            <option value="">Select Type</option>
+            <option value="TEXT">Text</option>
+            <option value="NUMBER">Number</option>
+            <option value="BOOLEAN">Boolean</option>
+            <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+            <option value="RATING">Rating</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="defaultVal">Default Value</label>
+          <input 
+            type="text"
+            id="defaultVal"
+            class="form-control"
+            [(ngModel)]="formData.defaultVal" 
+            name="defaultVal"
+            placeholder="Enter default value"
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="formData.isPrevious" 
+                name="isPrevious"
+              />
+              <span class="checkmark">Show Previous</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="formData.isCumulative" 
+                name="isCumulative"
+              />
+              <span class="checkmark">Show Cumulative</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="formula">Question Formula</label>
+          <textarea 
+            id="formula"
+            class="form-control"
+            [(ngModel)]="formData.formula" 
+            name="formula"
+            rows="3"
+            placeholder="Enter question formula"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="defaultQue">Default Question ID</label>
+          <input 
+            type="number"
+            id="defaultQue"
+            class="form-control"
+            [(ngModel)]="formData.defaultQue" 
+            name="defaultQue"
+            placeholder="Enter default question ID"
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="formData.active" 
+                name="active"
+              />
+              <span class="checkmark">Active</span>
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="resetForm()">Reset Formula</button>
+      <button class="cancel-btn" (click)="closeModal()">Close</button>
+      <button 
+        class="save-btn" 
+        [disabled]="!formData.question || !formData.topicId"
+        (click)="saveQuestion()"
+      >
+        {{isEditing ? 'Update' : 'Save'}}
+      </button>
+    </div>
+  </div>
 </div>
