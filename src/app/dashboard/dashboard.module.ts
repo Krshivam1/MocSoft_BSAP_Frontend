@@ -34,7 +34,7 @@ import { NgModule } from '@angular/core';
     SettingsComponent,
     ProfileComponent,
     ReactiveFormsModule, // ✅ Required for formGroup, formControlName, etc.
-    
+    FormsModule,
 
   ],
   declarations: [
@@ -42,8 +42,8 @@ import { NgModule } from '@angular/core';
     // PermissionsComponent,
     //  MenusComponent,
     // SubmenusComponent,
-    StateComponent,
-    RangeComponent,
+    // StateComponent,
+    // RangeComponent,
     DistrictComponent,
     UserComponent,
     // ModulesComponent,
@@ -51,7 +51,7 @@ import { NgModule } from '@angular/core';
    SubtopicsComponent,
     QuestionsComponent,
     ReportComponent,
-    CommunicationsComponent   
+     CommunicationsComponent   
   ]
 })
 export class DashboardModule { }

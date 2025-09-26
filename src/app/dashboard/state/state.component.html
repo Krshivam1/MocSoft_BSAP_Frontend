@@ -1,4 +1,186 @@
-<div class="state-container">
-  <h2>State Management</h2>
-  <p>State management functionality will be implemented here.</p>
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-title">
+      <div class="page-title-icon">
+        <i class="fas fa-map-marked-alt"></i>
+      </div>
+      <div class="page-title-text">List Of States</div>
+    </div>
+    <div class="action-buttons">
+      <button class="btn btn-primary-custom" (click)="openAddModal(addModal)">
+        <i class="fas fa-plus-circle me-2"></i> Add State
+      </button>
+    </div>
+  </div>
+  
+  <!-- Content Section -->
+  <div class="content-section">
+    <div class="table-container">
+      <!-- Table Header with Search and Entries Selector -->
+      <div class="table-header">
+        <div class="entries-selector">
+          <span>Show</span>
+          <select class="form-select" [(ngModel)]="entriesPerPage" (change)="onEntriesPerPageChange()" style="width: auto;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          <span>entries</span>
+        </div>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" class="form-control" placeholder="Search..." 
+                 [(ngModel)]="searchText" (input)="filterStates()">
+        </div>
+      </div>
+      
+      <!-- States Table -->
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>State Name</th>
+              <th>State Description</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let state of paginatedStates">
+              <td>{{ state.id }}</td>
+              <td>{{ state.name }}</td>
+              <td>{{ state.description }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="state.active ? 'status-active' : 'status-inactive'">
+                  {{ state.active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons-cell">
+                  <button class="btn btn-edit" (click)="openEditModal(editModal, state)">
+                    <i class="fas fa-edit me-1"></i> Edit
+                  </button>
+                  <button class="btn btn-deactivate" (click)="toggleStateStatus(state)">
+                    {{ state.active ? 'Deactivate' : 'Activate' }}
+                  </button>
+                  <button class="btn btn-danger" (click)="deleteState(state)">
+                    <i class="fas fa-trash me-1"></i> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredStates.length === 0">
+              <td colspan="5" class="no-data">
+                <i class="fas fa-inbox"></i>
+                <h4>No states found</h4>
+                <p>There are no states matching your criteria.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Table Footer with Pagination -->
+      <div class="table-footer">
+        <div class="page-info">
+          Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredStates.length }} entries
+        </div>
+        <div class="pagination-controls">
+          <button class="btn btn-outline-secondary btn-sm" 
+                  [disabled]="currentPage === 1" 
+                  (click)="previousPage()">
+            <i class="fas fa-chevron-left me-1"></i> Previous
+          </button>
+          <span class="mx-2">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button class="btn btn-outline-secondary btn-sm" 
+                  [disabled]="currentPage === totalPages" 
+                  (click)="nextPage()">
+            Next <i class="fas fa-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Add State Modal -->
+<ng-template #addModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="addStateModalLabel">Add State</h5>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="addStateForm" (ngSubmit)="addState()">
+      <div class="mb-3">
+        <label for="stateName" class="form-label">State Name *</label>
+        <input type="text" class="form-control" id="stateName" formControlName="name"
+               [ngClass]="{'is-invalid': addStateName?.invalid && addStateName?.touched}">
+        <div class="invalid-feedback" *ngIf="addStateName?.invalid && addStateName?.touched">
+          State name is required
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="stateDescription" class="form-label">State Description *</label>
+        <textarea class="form-control" id="stateDescription" rows="3" formControlName="description"
+                  [ngClass]="{'is-invalid': addStateDescription?.invalid && addStateDescription?.touched}"></textarea>
+        <div class="invalid-feedback" *ngIf="addStateDescription?.invalid && addStateDescription?.touched">
+          State description is required
+        </div>
+      </div>
+      <div class="mb-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="stateActive" formControlName="active">
+          <label class="form-check-label" for="stateActive">Active</label>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Close</button>
+    <button type="submit" class="btn btn-submit" [disabled]="addStateForm.invalid" 
+            (click)="addState()">Save State</button>
+  </div>
+</ng-template>
+
+<!-- Edit State Modal -->
+<ng-template #editModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="editStateModalLabel">Edit State</h5>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="editStateForm" (ngSubmit)="updateState()">
+      <input type="hidden" formControlName="id">
+      <div class="mb-3">
+        <label for="editStateName" class="form-label">State Name *</label>
+        <input type="text" class="form-control" id="editStateName" formControlName="name"
+               [ngClass]="{'is-invalid': editStateName?.invalid && editStateName?.touched}">
+        <div class="invalid-feedback" *ngIf="editStateName?.invalid && editStateName?.touched">
+          State name is required
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="editStateDescription" class="form-label">State Description *</label>
+        <textarea class="form-control" id="editStateDescription" rows="3" formControlName="description"
+                  [ngClass]="{'is-invalid': editStateDescription?.invalid && editStateDescription?.touched}"></textarea>
+        <div class="invalid-feedback" *ngIf="editStateDescription?.invalid && editStateDescription?.touched">
+          State description is required
+        </div>
+      </div>
+      <div class="mb-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="editStateActive" formControlName="active">
+          <label class="form-check-label" for="editStateActive">Active</label>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Close</button>
+    <button type="submit" class="btn btn-submit" [disabled]="editStateForm.invalid" 
+            (click)="updateState()">Update State</button>
+  </div>
+</ng-template>

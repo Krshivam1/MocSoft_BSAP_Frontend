@@ -1,0 +1,174 @@
+<div class="range-form-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas" [class.fa-plus]="!isEditMode" [class.fa-edit]="isEditMode"></i>
+      </div>
+      <div class="header-text">
+        <h1>{{isEditMode ? 'Edit Range' : 'Add New Range'}}</h1>
+        <p>{{isEditMode ? 'Update range information' : 'Create a new range entry'}}</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Back to List
+      </button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Form -->
+  <div class="form-container">
+    <form #rangeForm="ngForm" (ngSubmit)="onSubmit()" class="range-form">
+      
+      <!-- Row 1 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="stateId" class="form-label">
+            <i class="fas fa-map-marker-alt"></i> Select State
+          </label>
+          <select id="stateId" [(ngModel)]="range.stateId" name="stateId" class="form-control" required>
+            <option value="">Select State Name</option>
+            <option *ngFor="let state of states" [value]="state.id">
+              {{state.stateName}}
+            </option>
+          </select>
+          <div class="error-message" *ngIf="submitted && !range.stateId">
+            Please select a state
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rangeName" class="form-label">
+            <i class="fas fa-tag"></i> Range Name
+          </label>
+          <input type="text" id="rangeName" [(ngModel)]="range.rangeName" name="rangeName" 
+                 class="form-control" placeholder="Enter range name" required>
+          <div class="error-message" *ngIf="submitted && !range.rangeName">
+            Range name is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rangeHead" class="form-label">
+            <i class="fas fa-user"></i> Head of Range
+          </label>
+          <input type="text" id="rangeHead" [(ngModel)]="range.rangeHead" name="rangeHead" 
+                 class="form-control" placeholder="Enter range head name" required>
+          <div class="error-message" *ngIf="submitted && !range.rangeHead">
+            Range head name is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rangeContactNo" class="form-label">
+            <i class="fas fa-phone"></i> Contact No
+          </label>
+          <input type="tel" 
+       id="rangeContactNo" 
+       [(ngModel)]="range.rangeContactNo" 
+       name="rangeContactNo" 
+       class="form-control" 
+       placeholder="Enter contact number"
+       maxlength="10"
+       required
+       pattern="^[0-9]{7,10}$"
+       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+          <div class="error-message" *ngIf="submitted && (!range.rangeContactNo || !isValidContactNo(range.rangeContactNo))">
+            Please enter a valid 7-10 digit contact number
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rangeMobileNo" class="form-label">
+            <i class="fas fa-mobile-alt"></i> Mobile No
+          </label>
+          <input type="text" id="rangeMobileNo" [(ngModel)]="range.rangeMobileNo" name="rangeMobileNo" 
+                 class="form-control" placeholder="Enter mobile number" 
+                 pattern="[0-9]{10}" maxlength="10" required>
+          <div class="error-message" *ngIf="submitted && (!range.rangeMobileNo || !isValidMobileNo(range.rangeMobileNo))">
+            Please enter a valid 10 digit mobile number
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rangeEmail" class="form-label">
+            <i class="fas fa-envelope"></i> User ID (Email)
+          </label>
+          <input type="email" id="rangeEmail" [(ngModel)]="range.rangeEmail" name="rangeEmail" 
+                 class="form-control" placeholder="Ex. abc@gmail.com" required>
+          <div class="error-message" *ngIf="submitted && (!range.rangeEmail || !isValidEmail(range.rangeEmail))">
+            Please enter a valid email address
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4 - File Uploads -->
+      <div class="form-row">
+        <div class="form-group file-upload-group">
+          <label for="rangeImage" class="form-label">
+            <i class="fas fa-image"></i> Range Image
+          </label>
+          <div class="file-upload-container">
+            <input type="file" id="rangeImage" (change)="onFileSelected($event, 'rangeImage')" 
+                   class="file-input" accept="image/jpeg,image/jpg,image/png">
+            <label for="rangeImage" class="file-upload-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span>{{rangeImageName || 'Choose range image'}}</span>
+            </label>
+          </div>
+          <div class="file-hint">JPEG, JPG, PNG files only</div>
+        </div>
+
+        <div class="form-group file-upload-group">
+          <label for="rangePersonImage" class="form-label">
+            <i class="fas fa-user-circle"></i> Range Person Image
+          </label>
+          <div class="file-upload-container">
+            <input type="file" id="rangePersonImage" (change)="onFileSelected($event, 'rangePersonImage')" 
+                   class="file-input" accept="image/jpeg,image/jpg,image/png">
+            <label for="rangePersonImage" class="file-upload-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span>{{rangePersonImageName || 'Choose person image'}}</span>
+            </label>
+          </div>
+          <div class="file-hint">JPEG, JPG, PNG files only</div>
+        </div>
+      </div>
+
+      <!-- Row 5 - Description -->
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="rangeDiscription" class="form-label">
+            <i class="fas fa-align-left"></i> Description
+          </label>
+          <textarea id="rangeDiscription" [(ngModel)]="range.rangeDiscription" name="rangeDiscription"
+                    class="form-control textarea" placeholder="Enter range description" 
+                    rows="4" required></textarea>
+          <div class="error-message" *ngIf="submitted && !range.rangeDiscription">
+            Description is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="goBack()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          <i class="fas" [class.fa-spinner]="isLoading" [class.fa-save]="!isLoading"></i>
+          {{isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Save')}}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

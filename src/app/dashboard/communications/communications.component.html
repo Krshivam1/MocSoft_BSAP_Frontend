@@ -1,4 +1,120 @@
-<div class="communications-container">
-  <h2>Communications Management</h2>
-  <p>Communications management functionality will be implemented here.</p>
+<div class="container-fluid mt-4">
+  <div class="row mb-2">
+    <div class="col-12">
+      <button class="btn btn-primary" (click)="startNew()">Create New Communication</button>
+    </div>
+  </div>
 </div>
+
+<!-- Table -->
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="table-panel">
+        <table class="table table-bordered table-sm">
+          <thead>
+            <tr>
+              <th>Sr. No.</th>
+              <th>Created Date</th>
+              <th>Subject</th>
+              <th>Message/Question</th>
+              <th>Document</th>
+              <th>View/Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of communications; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ c.createdDate }}</td>
+              <td>{{ c.subject }}</td>
+              <td>{{ c.message }}</td>
+              <td>
+                <a *ngIf="c.document" href="{{ c.document }}" target="_blank">View</a>
+              </td>
+              <td>
+                <button class="btn btn-info btn-sm" (click)="detail()">Details</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="newCommunicationModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">Start New Communication</h5>
+        <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form (ngSubmit)="onSubmit()">
+
+          <!-- District -->
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label fw-semibold">District :</label>
+            <div class="col-sm-9">
+              <select [(ngModel)]="selectedDistricts" name="userIds"
+                      class="form-select" multiple required>
+                <option *ngFor="let d of districts" [value]="d.id">
+                  {{ d.districtName }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Subject -->
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label fw-semibold">Subject :</label>
+            <div class="col-sm-9">
+              <input [(ngModel)]="communicationName" name="communicationName"
+                     type="text" class="form-control" placeholder="Enter subject" required>
+            </div>
+          </div>
+
+          <!-- Message -->
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label fw-semibold">Message :</label>
+            <div class="col-sm-9">
+              <textarea [(ngModel)]="message" name="message"
+                        class="form-control" rows="4" maxlength="1000"
+                        placeholder="Write your message..." required></textarea>
+            </div>
+          </div>
+
+          <!-- Attachments -->
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label fw-semibold">Attachments :</label>
+            <div class="col-sm-9">
+              <input type="file" (change)="onFileChange($event)" multiple
+                     class="form-control"
+                     accept="image/jpg,image/jpeg,image/png,application/pdf">
+
+              <div id="fileList" class="mt-2">
+                <span *ngFor="let file of attachments"
+                      class="badge bg-info text-white me-1">
+                  {{ file.name }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+            <button type="submit" class="btn btn-primary">Send</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+

@@ -1,4 +1,259 @@
-<div class="district-container">
-  <h2>District Management</h2>
-  <p>District management functionality will be implemented here.</p>
+<div class="districts-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-map-marked-alt"></i>
+      </div>
+      <div class="header-text">
+        <h1>List Of Districts</h1>
+        <p>Manage district information efficiently</p>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="hasAddPermission">
+      <button class="btn btn-primary" (click)="addDistrict()">
+        <i class="fas fa-plus-circle"></i> Add District
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <i class="fas fa-layer-group"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{totalDistricts}}</h3>
+        <p>Total Districts</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon active">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{activeDistricts}}</h3>
+        <p>Active Districts</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon inactive">
+        <i class="fas fa-pause-circle"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{inactiveDistricts}}</h3>
+        <p>Inactive Districts</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table Section -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="table-controls-left">
+        <div class="entries-selector">
+          <span>Show</span>
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <span>entries</span>
+        </div>
+      </div>
+      
+      <div class="table-controls-right">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search districts..." 
+                 [(ngModel)]="searchTerm" 
+                 (input)="onSearch()">
+        </div>
+        <button class="btn btn-outline" (click)="exportToExcel()">
+          <i class="fas fa-download"></i> Export
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th *ngFor="let column of columns" 
+                [class.sortable]="column.sortable"
+                (click)="sort(column.key)"
+                [class.active]="sortColumn === column.key">
+              {{column.label}}
+              <span class="sort-icon" *ngIf="column.sortable">
+                <i class="fas" 
+                   [class.fa-sort]="sortColumn !== column.key"
+                   [class.fa-sort-up]="sortColumn === column.key && sortDirection === 'asc'"
+                   [class.fa-sort-down]="sortColumn === column.key && sortDirection === 'desc'"></i>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let district of paginatedDistricts; let i = index" 
+              [class.even]="i % 2 === 0"
+              [class.selected]="selectedDistrictId === district.id"
+              (click)="selectDistrict(district.id)">
+            <td class="text-center">{{district.id}}</td>
+            <td>{{district.rangeName}}</td>
+            <td>
+              <div class="district-name">
+                <strong>{{district.districtName}}</strong>
+              </div>
+            </td>
+            <td>
+              <div class="district-head">
+                <i class="fas fa-user-tie"></i>
+                {{district.districtHead}}
+              </div>
+            </td>
+            <td class="phone-number">
+              <i class="fas fa-mobile-alt"></i>
+              {{district.districtMobileNo}}
+            </td>
+            <td class="phone-number">
+              <i class="fas fa-phone"></i>
+              {{district.districtContactNo}}
+            </td>
+            <td class="email-cell">
+              <i class="fas fa-envelope"></i>
+              {{district.districtUserId}}
+            </td>
+            <td class="text-center">
+              <span class="area-badge">{{district.area}}</span>
+            </td>
+            <td class="description-cell" [title]="district.districtDescription">
+              {{district.districtDescription }}
+            </td>
+            <td class="text-center">
+              <div class="image-preview" *ngIf="district.districtHeadImage; else noImage">
+                <img [src]="district.districtHeadImage" alt="Head Image" class="thumbnail">
+                <div class="image-overlay" (click)="viewImage(district.districtHeadImage, district.districtHead)">
+                  <i class="fas fa-expand"></i>
+                </div>
+              </div>
+              <ng-template #noImage>
+                <span class="no-image">No Image</span>
+              </ng-template>
+            </td>
+            <td class="text-center">
+              <span class="status-badge" [class.active]="district.active" 
+                    [class.inactive]="!district.active">
+                <i class="fas" [class.fa-check]="district.active" [class.fa-times]="!district.active"></i>
+                {{district.active ? 'Active' : 'Inactive'}}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="action-buttons">
+                <button class="btn-action btn-edit" 
+                        (click)="editDistrict(district.id)" 
+                        title="Edit District">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button *ngIf="district.active" 
+                        class="btn-action btn-deactivate" 
+                        (click)="toggleStatus(district); $event.stopPropagation()"
+                        title="Deactivate District">
+                  <i class="fas fa-pause"></i>
+                </button>
+                <button *ngIf="!district.active" 
+                        class="btn-action btn-activate" 
+                        (click)="toggleStatus(district); $event.stopPropagation()"
+                        title="Activate District">
+                  <i class="fas fa-play"></i>
+                </button>
+                <button class="btn-action btn-delete" 
+                        (click)="deleteDistrict(district.id); $event.stopPropagation()"
+                        title="Delete District">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredDistricts.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-map"></i>
+      </div>
+      <h3>No Districts Found</h3>
+      <p *ngIf="searchTerm">No districts match your search criteria. Try different keywords.</p>
+      <p *ngIf="!searchTerm">No district entries available. Add your first district to get started.</p>
+      <button *ngIf="hasAddPermission && !searchTerm" class="btn btn-primary" (click)="addDistrict()">
+        <i class="fas fa-plus"></i> Add First District
+      </button>
+      <button *ngIf="searchTerm" class="btn btn-outline" (click)="clearSearch()">
+        <i class="fas fa-times"></i> Clear Search
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="filteredDistricts.length > 0">
+      <div class="pagination-info">
+        Showing {{getStartIndex()}} to {{getEndIndex()}} of {{filteredDistricts.length}} entries
+      </div>
+      <div class="pagination-controls">
+        <button class="btn-pagination" 
+                [disabled]="currentPage === 1" 
+                (click)="goToPage(1)"
+                title="First Page">
+          <i class="fas fa-angle-double-left"></i>
+        </button>
+        <button class="btn-pagination" 
+                [disabled]="currentPage === 1" 
+                (click)="previousPage()"
+                title="Previous Page">
+          <i class="fas fa-angle-left"></i>
+        </button>
+        
+        <div class="page-numbers">
+          <button *ngFor="let page of getVisiblePages()" 
+                  class="page-number" 
+                  [class.active]="page === currentPage"
+                  (click)="goToPage(page)"
+                  [disabled]="page === '...'">
+            {{page}}
+          </button>
+        </div>
+
+        <button class="btn-pagination" 
+                [disabled]="currentPage === totalPages" 
+                (click)="nextPage()"
+                title="Next Page">
+          <i class="fas fa-angle-right"></i>
+        </button>
+        <button class="btn-pagination" 
+                [disabled]="currentPage === totalPages" 
+                (click)="goToPage(totalPages)"
+                title="Last Page">
+          <i class="fas fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="modal" [class.show]="showImageModal" (click)="closeImageModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Image Preview - {{modalImageTitle}}</h3>
+        <button class="btn-close" (click)="closeImageModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img [src]="modalImageUrl" alt="Preview" class="modal-image">
+      </div>
+    </div>
+  </div>
 </div>

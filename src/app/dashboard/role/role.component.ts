@@ -29,13 +29,18 @@ export class RoleComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
+  // Modal properties
+  showModal: boolean = false;
+  isEditing: boolean = false;
+  selectedRole: Role = this.getDefaultRole();
+
   constructor() { }
 
   ngOnInit(): void {
     this.initializeData();
   }
 
-  // Initialize mock data - replace with API call later
+  // Initialize mock data
   initializeData(): void {
     this.roles = [
       { id: 1, roleName: 'ADMIN', active: true },
@@ -53,6 +58,15 @@ export class RoleComponent implements OnInit {
     this.updatePaginatedRoles();
   }
 
+  // Get default role template
+  getDefaultRole(): Role {
+    return {
+      id: 0,
+      roleName: '',
+      active: true
+    };
+  }
+
   // Search functionality
   onSearch(): void {
     if (!this.searchTerm.trim()) {
@@ -62,18 +76,18 @@ export class RoleComponent implements OnInit {
       this.filteredRoles = this.roles.filter(role => 
         role.id.toString().includes(searchLower) ||
         role.roleName.toLowerCase().includes(searchLower) ||
-        (role.active ? 'yes' : 'no').includes(searchLower)
+        (role.active ? 'active' : 'inactive').includes(searchLower)
       );
     }
     
     this.totalRoles = this.filteredRoles.length;
-    this.currentPage = 1; // Reset to first page
+    this.currentPage = 1;
     this.updatePaginatedRoles();
   }
 
   // Page size change handler
   onPageSizeChange(): void {
-    this.currentPage = 1; // Reset to first page
+    this.currentPage = 1;
     this.updatePaginatedRoles();
   }
 
@@ -164,30 +178,59 @@ export class RoleComponent implements OnInit {
     return Math.min(endRecord, this.totalRoles);
   }
 
+  // Modal methods
+  openAddModal(): void {
+    this.isEditing = false;
+    this.selectedRole = this.getDefaultRole();
+    this.showModal = true;
+  }
+
+  openEditModal(role: Role): void {
+    this.isEditing = true;
+    this.selectedRole = { ...role };
+    this.showModal = true;
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.selectedRole = this.getDefaultRole();
+  }
+
+  saveRole(): void {
+    if (this.isEditing) {
+      // Update existing role
+      const index = this.roles.findIndex(r => r.id === this.selectedRole.id);
+      if (index !== -1) {
+        this.roles[index] = { ...this.selectedRole };
+      }
+    } else {
+      // Add new role
+      const newId = this.roles.length > 0 ? Math.max(...this.roles.map(r => r.id)) + 1 : 1;
+      this.selectedRole.id = newId;
+      this.roles.push({ ...this.selectedRole });
+    }
+    
+    this.filteredRoles = [...this.roles];
+    this.totalRoles = this.filteredRoles.length;
+    this.updatePaginatedRoles();
+    this.closeModal();
+  }
+
   // Action methods
   addRole(): void {
-    // TODO: Implement add role functionality
-    // This could open a modal or navigate to add role page
-    console.log('Add role clicked');
-    alert('Add Role functionality will be implemented');
+    this.openAddModal();
   }
 
   viewRole(role: Role): void {
-    // TODO: Implement view role functionality
-    console.log('View role:', role);
-    alert(`Viewing role: ${role.roleName}`);
+    this.openEditModal(role);
   }
 
   toggleRoleStatus(role: Role): void {
-    // TODO: Implement API call to toggle role status
     const action = role.active ? 'deactivate' : 'activate';
     const confirmMessage = `Are you sure you want to ${action} the role "${role.roleName}"?`;
     
     if (confirm(confirmMessage)) {
       role.active = !role.active;
-      console.log(`Role ${role.roleName} ${action}d`);
-      
-      // Update the display
       this.updatePaginatedRoles();
     }
   }

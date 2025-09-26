@@ -1,4 +1,99 @@
 <div class="range-container">
-  <h2>Range Management</h2>
-  <p>Range management functionality will be implemented here.</p>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-list"></i>
+      </div>
+      <div class="header-text">
+        <h1>List Of Ranges</h1>
+        <p>Manage all range entries</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-success" (click)="addNewRange()">
+        <i class="fas fa-plus"></i> Add Range
+      </button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Data Table -->
+  <div class="table-container">
+    <div class="table-header">
+      <div class="table-info">
+        Showing {{ranges.length}} entries
+      </div>
+      <div class="table-controls">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search ranges..." [(ngModel)]="searchTerm" (input)="filterRanges()">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>State Name</th>
+            <th>Range Name</th>
+            <th>Range Head</th>
+            <th>Contact No</th>
+            <th>Mobile No</th>
+            <th>User ID</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let range of filteredRanges; let i = index" 
+              [class.even]="i % 2 === 0"
+              [class.odd]="i % 2 !== 0">
+            <td>{{range.id}}</td>
+            <td>{{range.stateName}}</td>
+            <td>{{range.rangeName}}</td>
+            <td>{{range.rangeHead}}</td>
+            <td>{{range.rangeContactNo}}</td>
+            <td>{{range.rangeMobileNo}}</td>
+            <td class="email-cell">{{range.rangeEmail}}</td>
+            <td>
+              <span class="status-badge" [class.active]="range.active" 
+                    [class.inactive]="!range.active">
+                {{range.active ? 'Active' : 'Inactive'}}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-edit" (click)="editRange(range.id)" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button *ngIf="range.active" class="btn-deactivate" (click)="toggleStatus(range)" title="Deactivate">
+                  <i class="fas fa-pause"></i>
+                </button>
+                <button *ngIf="!range.active" class="btn-activate" (click)="toggleStatus(range)" title="Activate">
+                  <i class="fas fa-play"></i>
+                </button>
+                <button class="btn-delete" (click)="deleteRange(range.id)" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredRanges.length === 0">
+      <i class="fas fa-inbox"></i>
+      <h3>No ranges found</h3>
+      <p>No range entries available. Add your first range to get started.</p>
+      <button class="btn btn-primary" (click)="addNewRange()">
+        <i class="fas fa-plus"></i> Add First Range
+      </button>
+    </div>
+  </div>
 </div>

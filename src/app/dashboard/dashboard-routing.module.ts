@@ -19,6 +19,9 @@ import { SubtopicsComponent } from './subtopics/subtopics.component';
 import { QuestionsComponent } from './questions/questions.component';
 import { ReportComponent } from './report/report.component';
 import { CommunicationsComponent } from './communications/communications.component';
+import { AddDistrictComponent } from './add-district/add-district.component';
+import { AddRangeComponent } from './add-range/add-range.component';
+import { CommunicationMessageComponent } from './communication-message/communication-message.component';
 
 const routes: Routes = [
   {
@@ -35,7 +38,10 @@ const routes: Routes = [
       { path: 'menus', component: MenusComponent },
       { path: 'submenus', component: SubmenusComponent },
       { path: 'state', component: StateComponent },
+       {path:'range/add',component:AddRangeComponent},
+       {path:'range/edit/:id',component:AddRangeComponent},
       { path: 'range', component: RangeComponent },
+      {path:'district/add',component:AddDistrictComponent},
       { path: 'district', component: DistrictComponent },
       { path: 'userManage', component: UserComponent },
       { path: 'modules', component: ModulesComponent },
@@ -43,6 +49,7 @@ const routes: Routes = [
       { path: 'subtopics', component: SubtopicsComponent },
       { path: 'questions', component: QuestionsComponent },
       { path: 'report', component: ReportComponent },
+      {path:'communication/message',component:CommunicationMessageComponent},
       { path: 'communications', component: CommunicationsComponent }
     ]
   }
