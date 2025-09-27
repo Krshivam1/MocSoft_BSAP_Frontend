@@ -1,1 +1,297 @@
-<p>performance works!</p>
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-container">
+  <div class="spinner"></div>
+  <p>Loading performance data...</p>
+</div>
+
+<!-- Main Content -->
+<div *ngIf="!loading" class="performance-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <h2 class="page-title">Performance Statistics</h2>
+    <div class="breadcrumb" *ngIf="currentModule && currentTopic">
+      <span class="breadcrumb-item">{{ currentModule.moduleName }}</span>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-item active">{{ currentTopic.topicName }}</span>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ errorMessage }}
+    <button class="close-btn" (click)="clearMessages()">&times;</button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+    <button class="close-btn" (click)="clearMessages()">&times;</button>
+  </div>
+
+  <!-- Form Container -->
+  <div *ngIf="currentModule && currentTopic" class="form-container">
+    <!-- Form Header Info -->
+    <div class="form-header">
+      <div class="form-info">
+        <div class="info-item">
+          <label>District:</label>
+          <span>{{ userDistrict }}</span>
+        </div>
+        <div class="info-item">
+          <label>Month/Year:</label>
+          <span>{{ monthYear }}</span>
+        </div>
+        <div class="info-item">
+          <label>Form Type:</label>
+          <span class="form-type-badge">{{ currentTopic.formType }}</span>
+        </div>
+        <div class="info-item">
+          <button type="button" class="debug-btn" (click)="debugFormulas()">Debug Formulas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Form -->
+    <form [formGroup]="performanceForm" class="performance-form">
+      
+      <!-- NORMAL Form Type -->
+      <div *ngIf="currentTopic.formType === 'NORMAL'" class="normal-form">
+        <h3 class="section-title">{{ currentTopic.topicName }}</h3>
+        <p *ngIf="currentTopic.topicSubName" class="section-subtitle">{{ currentTopic.topicSubName }}</p>
+        
+        <div class="normal-table-container">
+          <table class="normal-table">
+            <thead>
+              <tr>
+                <th class="sr-no-header">Sr No</th>
+                <th class="questions-header">Questions</th>
+                <th class="previous-header">Previous Month</th>
+                <th class="current-header">Current Month ({{ monthYear }})</th>
+                <th class="cumulative-header">Cumulative Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let question of currentTopic.questionDTOs; let i = index" class="normal-row">
+                <td class="sr-no-cell">{{ i + 1 }}</td>
+                <td class="question-cell">
+                  <span class="question-text" [innerHTML]="formatQuestionText(question)"></span>
+                </td>
+                <td class="previous-cell">
+                  <input 
+                    type="text" 
+                    class="normal-input readonly" 
+                    [value]="question.previousCount || '0'" 
+                    readonly>
+                </td>
+                <td class="current-cell">
+                  <input 
+                    type="number" 
+                    class="normal-input"
+                    [formControlName]="'question_' + question.id"
+                    [placeholder]="question.defaultVal"
+                    [readonly]="question.isDisabled">
+                </td>
+                <td class="cumulative-cell">
+                  <input 
+                    type="text" 
+                    class="normal-input readonly" 
+                    [value]="question.finYearCount || calculateFormulaValue(question)" 
+                    readonly>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Error messages -->
+        <div *ngFor="let question of currentTopic.questionDTOs; let i = index">
+          <div *ngIf="performanceForm.get('question_' + question.id)?.invalid && performanceForm.get('question_' + question.id)?.touched" 
+               class="error-message">
+            Question {{ i + 1 }}: This field is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Q/ST Form Type (Question-SubTopic Matrix) -->
+      <div *ngIf="currentTopic.formType === 'Q/ST'" class="matrix-form">
+        <h3 class="section-title">{{ currentTopic.topicName }}</h3>
+        <p *ngIf="currentTopic.topicSubName" class="section-subtitle">{{ currentTopic.topicSubName }}</p>
+        
+        <div class="matrix-container">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th class="question-header">Questions</th>
+                <th *ngFor="let subTopic of currentTopic.subTopics" class="subtopic-header">
+                  {{ subTopic.subTopicName }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let question of currentTopic.questionDTOs; let i = index" class="matrix-row">
+                <td class="question-cell">
+                  <span class="question-number">{{ i + 1 }}.</span>
+                  <span class="question-text" [innerHTML]="formatQuestionText(question)"></span>
+                </td>
+                <td *ngFor="let subTopic of currentTopic.subTopics" class="input-cell">
+                  <input 
+                    type="number" 
+                    class="matrix-input"
+                    [formControlName]="'matrix_' + question.id + '_' + subTopic.id"
+                    [readonly]="question.isDisabled || subTopic.isDisabled || isCalculatedField(question.id, subTopic.id)"
+                    [class.calculated-field]="isCalculatedField(question.id, subTopic.id)">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ST/Q Form Type (SubTopic-Question Matrix) -->
+      <div *ngIf="currentTopic.formType === 'ST/Q'" class="matrix-form">
+        <h3 class="section-title">{{ currentTopic.topicName }}</h3>
+        <p *ngIf="currentTopic.topicSubName" class="section-subtitle">{{ currentTopic.topicSubName }}</p>
+        
+        <div class="matrix-container">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th class="subtopic-header">Sub Topics</th>
+                <th *ngFor="let question of currentTopic.questionDTOs" class="question-header">
+                  Q{{ question.id }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let subTopic of currentTopic.subTopics; let i = index" class="matrix-row">
+                <td class="subtopic-cell">
+                  {{ subTopic.subTopicName }}
+                </td>
+                <td *ngFor="let question of currentTopic.questionDTOs" class="input-cell">
+                  <input 
+                    type="number" 
+                    class="matrix-input"
+                    [formControlName]="'matrix_' + question.id + '_' + subTopic.id"
+                    [readonly]="question.isDisabled || subTopic.isDisabled || isCalculatedField(question.id, subTopic.id)"
+                    [class.calculated-field]="isCalculatedField(question.id, subTopic.id)">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Question Details Section -->
+        <div class="questions-details">
+          <h4>Question Details</h4>
+          <div *ngFor="let question of currentTopic.questionDTOs; let i = index" class="question-detail">
+            <span class="question-label">Q{{ question.id }}:</span>
+            <span class="question-text" [innerHTML]="formatQuestionText(question)"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <div class="navigation-buttons">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="navigatePrevious()"
+            [disabled]="!prevModule && !prevTopic">
+            <i class="fas fa-arrow-left"></i> Previous
+          </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="navigateNext()"
+            [disabled]="!nextModule && !nextTopic">
+            Next <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+        
+        <div class="form-buttons">
+          <button 
+            type="button" 
+            class="btn btn-outline" 
+            (click)="saveForm()"
+            [disabled]="saving">
+            <i class="fas fa-save"></i>
+            {{ saving ? 'Saving...' : 'Save Draft' }}
+          </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            (click)="submitForm()"
+            [disabled]="saving || !performanceForm.valid">
+            <i class="fas fa-paper-plane"></i>
+            {{ saving ? 'Submitting...' : 'Submit' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Success State -->
+  <div *ngIf="isSuccess" class="success-container">
+    <div class="success-icon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <h3>Form Submitted Successfully!</h3>
+    <p>Your performance statistics have been recorded.</p>
+    <div class="success-actions">
+      <button class="btn btn-primary" (click)="navigateNext()" *ngIf="nextModule || nextTopic">
+        Continue to Next
+      </button>
+      <button class="btn btn-outline" routerLink="/dashboard/homePage">
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- OTP Verification Modal -->
+<div *ngIf="showOTPModal" class="modal-overlay" (click)="closeOTPModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>OTP Verification</h3>
+      <button class="close-btn" (click)="closeOTPModal()">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <p>Please enter the 6-digit OTP sent to your registered mobile number:</p>
+      
+      <div class="otp-input-container">
+        <input 
+          type="text" 
+          class="otp-input" 
+          [(ngModel)]="otpValue" 
+          placeholder="Enter OTP"
+          maxlength="6"
+          pattern="[0-9]{6}">
+      </div>
+      
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeOTPModal()">Cancel</button>
+      <button 
+        class="btn btn-primary" 
+        (click)="verifyOTP()"
+        [disabled]="!otpValue || otpValue.length !== 6 || saving">
+        {{ saving ? 'Verifying...' : 'Verify OTP' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Auto-save Indicator -->
+<div *ngIf="performanceForm?.dirty" class="auto-save-indicator">
+  <i class="fas fa-clock"></i>
+  Auto-saving...
+</div>

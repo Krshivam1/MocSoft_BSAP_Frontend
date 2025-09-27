@@ -22,6 +22,7 @@ import { SubtopicsComponent } from './subtopics/subtopics.component';
 import { QuestionsComponent } from './questions/questions.component';
 import { ReportComponent } from './report/report.component';
 import { CommunicationsComponent } from './communications/communications.component';
+import { PerformanceComponent } from './performance/performance.component';
 
 @NgModule({
   imports: [
@@ -32,7 +33,8 @@ import { CommunicationsComponent } from './communications/communications.compone
     DashboardComponent,
     HomeComponent,
     SettingsComponent,
-    ProfileComponent
+    ProfileComponent,
+    PerformanceComponent
   ],
   declarations: [
     UsersComponent,
