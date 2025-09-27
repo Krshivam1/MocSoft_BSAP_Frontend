@@ -105,11 +105,33 @@ export class DashboardComponent implements OnInit {
     this.isSidenavCollapsed = !this.isSidenavCollapsed;
   }
  navigate(url: string) {
+  if (url.includes('?')) {
+    const [path, queryString] = url.split('?');
+    const queryParams: { [key: string]: string } = {};
+    
+    // Parse query parameters
+    if (queryString) {
+      queryString.split('&').forEach(param => {
+        const [key, value] = param.split('=');
+        if (key && value) {
+          queryParams[key] = decodeURIComponent(value);
+        }
+      });
+    }
+    const relativePath = path.startsWith('/') ? path.substring(1) : path;
+    
+    // Navigate with query parameters
+    this.router.navigate([relativePath], { 
+      relativeTo: this.route,
+      queryParams: queryParams
+    });
+  } else {
+    
     // Remove leading slash to make it relative navigation
     const relativePath = url.startsWith('/') ? url.substring(1) : url;
     this.router.navigate([relativePath], { relativeTo: this.route });
   }
- 
+}
   // logout() {
   //   const logoutSub = this.authService.logout().subscribe({
   //     next: () => {

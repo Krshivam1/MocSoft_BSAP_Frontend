@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
@@ -27,14 +27,15 @@ import { CommunicationsComponent } from './communications/communications.compone
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     DashboardRoutingModule,
     DashboardComponent,
     HomeComponent,
-    UsersComponent,
     SettingsComponent,
-    ProfileComponent,
+    ProfileComponent
   ],
   declarations: [
+    UsersComponent,
     RoleComponent,
     PermissionsComponent,
     MenusComponent,

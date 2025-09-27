@@ -1,4 +1,299 @@
-<div class="permissions-container">
-  <h2>Permissions Management</h2>
-  <p>Permissions management functionality will be implemented here.</p>
+<div class="data-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="title-section">
+      <div class="icon">🔐</div>
+      <h1>List Of Permissions</h1>
+    </div>
+    <button class="add-btn" (click)="showAddPermissionModal()">Add Permission</button>
+  </div>
+
+  <!-- Table Controls -->
+  <div class="table-controls">
+    <div class="show-entries">
+      <label for="entries">Show</label>
+      <select id="entries" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      <span>entries</span>
+    </div>
+    
+    <div class="search-box">
+      <label for="search">Search:</label>
+      <input 
+        type="text" 
+        id="search"
+        [(ngModel)]="searchTerm" 
+        (input)="onSearch()" 
+        placeholder="Search permissions..."
+      />
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th (click)="sortTable('id')" class="sortable">
+            Id
+            <span class="sort-icon" [class.active]="sortColumn === 'id'">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortTable('name')" class="sortable">
+            Permission Name
+            <span class="sort-icon" [class.active]="sortColumn === 'name'">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortTable('code')" class="sortable">
+            Permission Code
+            <span class="sort-icon" [class.active]="sortColumn === 'code'">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortTable('url')" class="sortable">
+            Permission URL
+            <span class="sort-icon" [class.active]="sortColumn === 'url'">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortTable('active')" class="sortable">
+            Active
+            <span class="sort-icon" [class.active]="sortColumn === 'active'">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let permission of paginatedPermissions; trackBy: trackByPermissionId">
+          <td>{{ permission.id }}</td>
+          <td>{{ permission.name }}</td>
+          <td>{{ permission.code }}</td>
+          <td>{{ permission.url }}</td>
+          <td>
+            <span class="status-badge" [class.active]="permission.active" [class.inactive]="!permission.active">
+              {{ permission.active ? 'YES' : 'NO' }}
+            </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="edit-btn" (click)="editPermission(permission)">Edit</button>
+              <button 
+                class="deactivate-btn" 
+                [class.activate]="!permission.active"
+                (click)="togglePermissionStatus(permission)"
+              >
+                {{ permission.active ? 'Deactivate' : 'Activate' }}
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container">
+    <div class="pagination-info">
+      Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredPermissions.length }} entries
+    </div>
+    
+    <div class="pagination">
+      <button 
+        class="page-btn" 
+        [disabled]="currentPage === 1" 
+        (click)="previousPage()"
+      >
+        Previous
+      </button>
+      
+      <button 
+        *ngFor="let page of getVisiblePages()" 
+        class="page-btn" 
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)"
+      >
+        {{ page }}
+      </button>
+      
+      <button 
+        class="page-btn" 
+        [disabled]="currentPage === totalPages" 
+        (click)="nextPage()"
+      >
+        Next
+      </button>
+    </div>
+  </div>
 </div>
+
+
+  <!-- Add Permission Modal -->
+  <div class="modal-overlay" *ngIf="showModal && !isEditMode" (click)="closeModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Add Permission</h4>
+          <button type="button" class="close-btn" (click)="closeModal()">
+            <span>&times;</span>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <form (ngSubmit)="addPermission()" #permissionForm="ngForm">
+            <div class="form-group">
+              <label for="permissionName">Name <span class="required">*</span></label>
+              <input type="text" 
+                     id="permissionName"
+                     name="permissionName"
+                     class="form-control" 
+                     [(ngModel)]="currentPermission.name"
+                     required
+                     #permissionNameInput="ngModel"
+                     placeholder="Enter permission name">
+              <div class="error-message" *ngIf="permissionNameInput.invalid && permissionNameInput.touched">
+                Permission name is required
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="permissionCode">Code <span class="required">*</span></label>
+              <input type="text" 
+                     id="permissionCode"
+                     name="permissionCode"
+                     class="form-control" 
+                     [(ngModel)]="currentPermission.code"
+                     required
+                     #permissionCodeInput="ngModel"
+                     placeholder="Enter permission code">
+              <div class="error-message" *ngIf="permissionCodeInput.invalid && permissionCodeInput.touched">
+                Permission code is required
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="permissionUrl">URL</label>
+              <input type="text" 
+                     id="permissionUrl"
+                     name="permissionUrl"
+                     class="form-control" 
+                     [(ngModel)]="currentPermission.url"
+                     placeholder="Enter permission URL">
+            </div>
+            
+            <div class="form-group">
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" 
+                         name="permissionActive"
+                         [(ngModel)]="currentPermission.active">
+                  <span class="checkmark">Active</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" class="cancel-btn" (click)="closeModal()">
+                Close
+              </button>
+              <button type="submit" 
+                      class="save-btn" 
+                      [disabled]="permissionForm.invalid || isLoading">
+                <span *ngIf="isLoading" class="spinner"></span>
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Permission Modal -->
+  <div class="modal-overlay" *ngIf="showModal && isEditMode" (click)="closeModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Edit Permission</h4>
+          <button type="button" class="close-btn" (click)="closeModal()">
+            <span>&times;</span>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <form (ngSubmit)="updatePermission()" #editPermissionForm="ngForm">
+            <div class="form-group">
+              <label for="editPermissionName">Name <span class="required">*</span></label>
+              <input type="text" 
+                     id="editPermissionName"
+                     name="editPermissionName"
+                     class="form-control" 
+                     [(ngModel)]="currentPermission.name"
+                     required
+                     #editPermissionNameInput="ngModel"
+                     placeholder="Enter permission name">
+              <div class="error-message" *ngIf="editPermissionNameInput.invalid && editPermissionNameInput.touched">
+                Permission name is required
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="editPermissionCode">Code <span class="required">*</span></label>
+              <input type="text" 
+                     id="editPermissionCode"
+                     name="editPermissionCode"
+                     class="form-control" 
+                     [(ngModel)]="currentPermission.code"
+                     required
+                     #editPermissionCodeInput="ngModel"
+                     placeholder="Enter permission code">
+              <div class="error-message" *ngIf="editPermissionCodeInput.invalid && editPermissionCodeInput.touched">
+                Permission code is required
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="editPermissionUrl">URL</label>
+              <input type="text" 
+                     id="editPermissionUrl"
+                     name="editPermissionUrl"
+                     class="form-control" 
+                     [(ngModel)]="currentPermission.url"
+                     placeholder="Enter permission URL">
+            </div>
+            
+            <div class="form-group">
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" 
+                         name="editPermissionActive"
+                         [(ngModel)]="currentPermission.active">
+                  <span class="checkmark">Active</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" class="cancel-btn" (click)="closeModal()">
+                Close
+              </button>
+              <button type="submit" 
+                      class="save-btn" 
+                      [disabled]="editPermissionForm.invalid || isLoading">
+                <span *ngIf="isLoading" class="spinner"></span>
+                Update
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
