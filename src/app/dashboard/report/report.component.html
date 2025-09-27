@@ -1,4 +1,219 @@
-<div class="report-container">
-  <h2>Report Management</h2>
-  <p>Report management functionality will be implemented here.</p>
+<div class="report-container container-fluid py-3">
+  <h2 class="text-center fw-bold mb-3">Report Generation</h2>
+  <hr class="solid" />
+
+  <!-- Filter Form -->
+  <form (ngSubmit)="onFilter()" class="filter-form">
+    <!-- District & Module -->
+    <div class="row mb-3">
+      <!-- District Dropdown -->
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">District</label>
+        <div class="dropdown">
+          <button class="form-select text-start dropdown-toggle" 
+                  type="button" 
+                  id="districtDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false">
+            {{ selectedDistricts.length > 0 ? (selectedDistricts.length + ' selected') : 'Select Districts' }}
+          </button>
+          <div class="dropdown-menu p-3" style="width: 100%; max-height: 300px; overflow-y: auto;" aria-labelledby="districtDropdown">
+            <div *ngFor="let d of districts" class="form-check">
+              <input class="form-check-input" 
+                     type="checkbox" 
+                     [value]="d.id" 
+                     [id]="'district-'+d.id"
+                     [checked]="selectedDistricts.includes(d.id)"
+                     (change)="onDistrictCheckboxChange(d.id, $event)">
+              <label class="form-check-label" [for]="'district-'+d.id">
+                {{ d.name }}
+              </label>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="d-flex justify-content-between">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectAllDistricts()">Select All</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearAllDistricts()">Clear All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module Dropdown -->
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Module</label>
+        <div class="dropdown">
+          <button class="form-select text-start dropdown-toggle" 
+                  type="button" 
+                  id="moduleDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false">
+            {{ selectedModules.length > 0 ? (selectedModules.length + ' selected') : 'Select Modules' }}
+          </button>
+          <div class="dropdown-menu p-3" style="width: 100%; max-height: 300px; overflow-y: auto;" aria-labelledby="moduleDropdown">
+            <div *ngFor="let m of modules" class="form-check">
+              <input class="form-check-input" 
+                     type="checkbox" 
+                     [value]="m.id" 
+                     [id]="'module-'+m.id"
+                     [checked]="selectedModules.includes(m.id)"
+                     (change)="onModuleCheckboxChange(m.id, $event)">
+              <label class="form-check-label" [for]="'module-'+m.id">
+                {{ m.name }}
+              </label>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="d-flex justify-content-between">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectAllModules()">Select All</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearAllModules()">Clear All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Topic Dropdown -->
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Topic</label>
+        <div class="dropdown">
+          <button class="form-select text-start dropdown-toggle" 
+                  type="button" 
+                  id="topicDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                  [disabled]="topics.length === 0">
+            {{ selectedTopics.length > 0 ? (selectedTopics.length + ' selected') : (topics.length === 0 ? 'No topics available' : 'Select Topics') }}
+          </button>
+          <div class="dropdown-menu p-3" style="width: 100%; max-height: 300px; overflow-y: auto;" aria-labelledby="topicDropdown">
+            <div *ngFor="let t of topics" class="form-check">
+              <input class="form-check-input" 
+                     type="checkbox" 
+                     [value]="t.id" 
+                     [id]="'topic-'+t.id"
+                     [checked]="selectedTopics.includes(t.id)"
+                     (change)="onTopicCheckboxChange(t.id, $event)">
+              <label class="form-check-label" [for]="'topic-'+t.id">
+                {{ t.name }}
+              </label>
+            </div>
+            <div *ngIf="topics.length > 0" class="dropdown-divider"></div>
+            <div *ngIf="topics.length > 0" class="d-flex justify-content-between">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectAllTopics()">Select All</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearAllTopics()">Clear All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-Topic Dropdown -->
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Sub-Topic</label>
+        <div class="dropdown">
+          <button class="form-select text-start dropdown-toggle" 
+                  type="button" 
+                  id="subTopicDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                  [disabled]="subTopics.length === 0">
+            {{ selectedSubTopics.length > 0 ? (selectedSubTopics.length + ' selected') : (subTopics.length === 0 ? 'No sub-topics available' : 'Select Sub-Topics') }}
+          </button>
+          <div class="dropdown-menu p-3" style="width: 100%; max-height: 300px; overflow-y: auto;" aria-labelledby="subTopicDropdown">
+            <div *ngFor="let s of subTopics" class="form-check">
+              <input class="form-check-input" 
+                     type="checkbox" 
+                     [value]="s.id" 
+                     [id]="'subtopic-'+s.id"
+                     [checked]="selectedSubTopics.includes(s.id)"
+                     (change)="onSubTopicCheckboxChange(s.id, $event)">
+              <label class="form-check-label" [for]="'subtopic-'+s.id">
+                {{ s.name }}
+              </label>
+            </div>
+            <div *ngIf="subTopics.length > 0" class="dropdown-divider"></div>
+            <div *ngIf="subTopics.length > 0" class="d-flex justify-content-between">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectAllSubTopics()">Select All</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearAllSubTopics()">Clear All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions + Date Range -->
+    <div class="row mb-3">
+      <!-- Questions Dropdown -->
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Questions</label>
+        <div class="dropdown">
+          <button class="form-select text-start dropdown-toggle" 
+                  type="button" 
+                  id="questionDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                  [disabled]="questions.length === 0">
+            {{ selectedQuestions.length > 0 ? (selectedQuestions.length + ' selected') : (questions.length === 0 ? 'No questions available' : 'Select Questions') }}
+          </button>
+          <div class="dropdown-menu p-3" style="width: 100%; max-height: 300px; overflow-y: auto;" aria-labelledby="questionDropdown">
+            <div *ngFor="let q of questions" class="form-check">
+              <input class="form-check-input" 
+                     type="checkbox" 
+                     [value]="q.id" 
+                     [id]="'question-'+q.id"
+                     [checked]="selectedQuestions.includes(q.id)"
+                     (change)="onQuestionCheckboxChange(q.id, $event)">
+              <label class="form-check-label" [for]="'question-'+q.id">
+                {{ q.text }}
+              </label>
+            </div>
+            <div *ngIf="questions.length > 0" class="dropdown-divider"></div>
+            <div *ngIf="questions.length > 0" class="d-flex justify-content-between">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectAllQuestions()">Select All</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearAllQuestions()">Clear All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Month -->
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Start Month</label>
+        <select [(ngModel)]="startMonth" name="startMonth" class="form-select">
+          <option value="" disabled>Select Month</option>
+          <option *ngFor="let m of months" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+
+      <!-- End Month -->
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">End Month</label>
+        <select [(ngModel)]="endMonth" name="endMonth" class="form-select">
+          <option value="" disabled>Select Month</option>
+          <option *ngFor="let m of months" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center mb-4">
+      <button type="submit" class="btn btn-primary me-2">Filter</button>
+      <button type="button" class="btn btn-success me-2" (click)="viewReport()">View Report</button>
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="downloadExcel()">Download Excel</button>
+      <button type="button" class="btn btn-outline-secondary" (click)="downloadPdf()">Download PDF</button>
+    </div>
+  </form>
+
+  <!-- Rest of your content remains the same -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <canvas id="reportChart"></canvas>
+    </div>
+  </div>
+
+  <div class="text-center mb-4">
+    <button class="btn btn-outline-primary" (click)="printChart()">Print Chart</button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <iframe id="dataFile" [src]="dataFileUrl" class="data-frame"></iframe>
+    </div>
+  </div>
 </div>

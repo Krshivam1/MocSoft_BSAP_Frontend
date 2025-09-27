@@ -1,7 +1,5 @@
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
 import { HomeComponent } from './home/home.component';
@@ -35,7 +33,7 @@ import { NgModule } from '@angular/core';
     ProfileComponent,
     ReactiveFormsModule, // ✅ Required for formGroup, formControlName, etc.
     FormsModule,
-
+    // NgSelectModule,
   ],
   declarations: [
     RoleComponent,

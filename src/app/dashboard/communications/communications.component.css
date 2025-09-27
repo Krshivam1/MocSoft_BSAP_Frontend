@@ -35,6 +35,135 @@
   height: 100%;
   overflow: auto;
   background: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+}
+
+.modal-dialog {
+  margin: 40px auto;
+  max-width: 800px;
+}
+
+.modal-content {
+  border-radius: 12px;
+  padding: 15px;
+}
+
+/* ---------- Modal Header ---------- */
+.modal-header {
+  border-bottom: 1px solid #dee2e6;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-weight: 600;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #333;
+}
+
+/* ---------- Form ---------- */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-select,
+.form-control {
+  border-radius: 6px;
+}
+
+textarea.form-control {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* ---------- Footer ---------- */
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn {
+  border-radius: 6px;
+  min-width: 90px;
+}
+
+/* ---------- File Badges ---------- */
+#fileList .badge {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* ---------- Custom Dropdown Styles ---------- */
+.dropdown-menu {
+  border: 1px solid #ced4da;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.form-check {
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.dropdown-toggle::after {
+  float: right;
+  margin-top: 0.5rem;
+}
+
+.dropdown-menu .form-check-label {
+  cursor: pointer;
+  width: 100%;
+}
+
+/* Highlight when items are selected */
+.btn-outline-primary {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 20px auto;
+    max-width: 95%;
+  }
+  
+  .form-group.row .col-sm-3,
+  .form-group.row .col-sm-9 {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* ---------- Modal ---------- */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1050;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.6);
   padding: 20px; /* extra space around modal */
 }
 
