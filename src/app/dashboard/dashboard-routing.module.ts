@@ -19,6 +19,7 @@ import { SubtopicsComponent } from './subtopics/subtopics.component';
 import { QuestionsComponent } from './questions/questions.component';
 import { ReportComponent } from './report/report.component';
 import { CommunicationsComponent } from './communications/communications.component';
+import { PerformanceComponent } from './performance/performance.component';
 
 const routes: Routes = [
   {
@@ -43,7 +44,8 @@ const routes: Routes = [
       { path: 'subtopics', component: SubtopicsComponent },
       { path: 'questions', component: QuestionsComponent },
       { path: 'report', component: ReportComponent },
-      { path: 'communications', component: CommunicationsComponent }
+      { path: 'communications', component: CommunicationsComponent },
+      { path: 'performance', component: PerformanceComponent } // Ensure PerformanceComponent is imported
     ]
   }
 ];

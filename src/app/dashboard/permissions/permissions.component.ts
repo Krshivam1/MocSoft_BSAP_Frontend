@@ -1,76 +1,218 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 
-interface Permission {
-  id: number;
-  name: string;
-  code: string;
-  url: string;
-  active: boolean;
-}
+import { Component, OnInit } from '@angular/core';
+import { ApiService, Permission, ApiResponse } from '../../services/api.service';
 
 @Component({
   selector: 'app-permissions',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
   templateUrl: './permissions.component.html',
-  styleUrl: './permissions.component.css'
+  styleUrls: ['./permissions.component.css']
 })
-export class PermissionsComponent{
+export class PermissionsComponent implements OnInit {
   permissions: Permission[] = [];
-  addPermissionVisible: boolean = true;
+  searchTerm: string = '';
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalPages: number = 1;
+  totalItems: number = 0;
 
-  // form model
-  newPermission: Permission = { id: 0, name: '', code: '', url: '', active: true };
-  isEditMode: boolean = false;  // 🔹 track add vs edit
+  showModal = false;
+  isEditMode = false;
+  isLoading = false;
+  currentPermission: Permission = { id: 0, permissionName: '', permissionCode: '', permissionUrl: '', active: true };
+  
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor() {}
+  constructor(private apiService: ApiService) {}
 
   ngOnInit() {
-    // TODO: Replace with API call
-    this.permissions = [
-      { id: 1, name: 'View Users', code: 'VIEW_USER', url: '/users', active: true },
-      { id: 2, name: 'Edit Users', code: 'EDIT_USER', url: '/users/edit', active: true },
-      { id: 3, name: 'Delete Users', code: 'DELETE_USER', url: '/users/delete', active: false }
-    ];
+    this.loadPermissions();
   }
 
-  // 🔹 Open Add Modal
-  openAddModal() {
-    this.isEditMode = false;
-    this.newPermission = { id: 0, name: '', code: '', url: '', active: true };
-    (document.getElementById('permissionModal') as any).style.display = 'block';
-  }
-
-  // 🔹 Open Edit Modal
-  openEditModal(permission: Permission) {
-    this.isEditMode = true;
-    this.newPermission = { ...permission }; // copy existing data
-    (document.getElementById('permissionModal') as any).style.display = 'block';
-  }
-
-  // Close modal
-  closeModal() {
-    (document.getElementById('permissionModal') as any).style.display = 'none';
-  }
-
-  // 🔹 Save or Update
-  savePermission() {
-    if (this.isEditMode) {
-      // update existing permission
-      const index = this.permissions.findIndex(p => p.id === this.newPermission.id);
-      if (index !== -1) {
-        this.permissions[index] = { ...this.newPermission };
+  loadPermissions(): void {
+    this.isLoading = true;
+    this.apiService.getPermissions(
+      this.currentPage,
+      this.pageSize,
+      this.searchTerm,
+      this.getSortByField(),
+      this.sortDirection
+    ).subscribe({
+      next: (response: ApiResponse<Permission[]>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.permissions = response.data || [];
+          this.totalItems = response.pagination?.total || 0;
+          this.totalPages = response.pagination?.totalPages || 0;
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error loading permissions:', error);
       }
+    });
+  }
+
+  onSearch(): void {
+    this.currentPage = 1;
+    this.loadPermissions();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.loadPermissions();
+  }
+
+  get paginatedPermissions(): Permission[] {
+    return this.permissions;
+  }
+
+  get showingStart(): number {
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get showingEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
+  showAddPermissionModal(): void {
+    this.currentPermission = { id: 0, permissionName: '', permissionCode: '', permissionUrl: '', active: true };
+    this.isEditMode = false;
+    this.showModal = true;
+  }
+
+  editPermission(permission: Permission): void {
+    this.currentPermission = { ...permission };
+    this.isEditMode = true;
+    this.showModal = true;
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.isEditMode = false;
+    this.currentPermission = { id: 0, permissionName: '', permissionCode: '', permissionUrl: '', active: true };
+  }
+
+  togglePermissionStatus(permission: Permission): void {
+    this.apiService.togglePermissionStatus(permission.id, !permission.active).subscribe({
+      next: (response: ApiResponse<Permission>) => {
+        if (response.status === 'SUCCESS') {
+          this.loadPermissions();
+        }
+      },
+      error: (error) => {
+        console.error('Error toggling permission status:', error);
+      }
+    });
+  }
+
+  sortTable(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-      // add new
-      const newId = this.permissions.length + 1;
-      this.permissions.push({
-        ...this.newPermission,
-        id: newId
-      });
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
     }
-    this.closeModal();
+    this.loadPermissions();
+  }
+
+  private getSortByField(): string {
+    const fieldMap: { [key: string]: string } = {
+      'id': 'id',
+      'name': 'permissionName',
+      'code': 'permissionCode',
+      'url': 'permissionUrl',
+      'active': 'active'
+    };
+    return fieldMap[this.sortColumn] || 'permissionName';
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadPermissions();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadPermissions();
+    }
+  }
+
+  goToPage(page: number): void {
+    this.currentPage = page;
+    this.loadPermissions();
+  }
+
+  getVisiblePages(): number[] {
+    const totalPages = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, current - delta); i <= Math.min(totalPages - 1, current + delta); i++) {
+      range.push(i);
+    }
+
+    if (current - delta > 2) {
+      rangeWithDots.push(1, -1);
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (current + delta < totalPages - 1) {
+      rangeWithDots.push(-1, totalPages);
+    } else {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots.filter((v, i, arr) => arr.indexOf(v) === i && v > 0);
+  }
+
+  addPermission(): void {
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    this.apiService.createPermission(this.currentPermission).subscribe({
+      next: (response: ApiResponse<Permission>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadPermissions();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error creating permission:', error);
+      }
+    });
+  }
+
+  updatePermission(): void {
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    this.apiService.updatePermission(this.currentPermission.id, this.currentPermission).subscribe({
+      next: (response: ApiResponse<Permission>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadPermissions();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error updating permission:', error);
+      }
+    });
+  }
+
+  trackByPermissionId(index: number, permission: Permission): number {
+    return permission.id;
   }
 }

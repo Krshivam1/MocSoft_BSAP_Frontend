@@ -2,7 +2,7 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:5000/api/', // local development API
-  
+  //apiUrl: 'http://164.52.217.93:9071/api/',
   // API Endpoints
   endpoints: {
     // Authentication

@@ -1,252 +1,291 @@
-<div class="dashboardContent">
-
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <div class="header-icon">
-        <i class="pe-7s-monitor icon-gradient"></i>
-      </div>
-      <div class="header-text">
-        <h1>Question Management</h1>
-        <p>Manage and organize all questions in the system</p>
-      </div>
+<div class="data-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="title-section">
+      <div class="icon">❓</div>
+      <h1>List Of Questions</h1>
     </div>
-    <div class="header-actions" *ngIf="ADQSTN">
-      <button type="button" class="btn btn-primary btn-add" 
-              data-bs-toggle="modal" data-bs-target="#addQuestionModal"
-              (click)="openAddModal()">
-        <i class="fas fa-plus"></i> Add Question
-      </button>
+    <button class="add-btn" (click)="openAddModal()">Add Question</button>
+  </div>
+
+  <!-- Table Controls -->
+  <div class="table-controls">
+    <div class="show-entries">
+      <span>Show</span>
+      <select [(ngModel)]="entriesPerPage" (change)="onEntriesPerPageChange()">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      <span>entries</span>
     </div>
   </div>
 
-  <!-- Statistics Cards -->
-  <div class="stats-container">
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="fas fa-question-circle"></i>
-      </div>
-      <div class="stat-info">
-        <h3>{{questions.length}}</h3>
-        <p>Total Questions</p>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon active">
-        <i class="fas fa-check-circle"></i>
-      </div>
-      <div class="stat-info">
-        <h3>{{getActiveQuestionsCount()}}</h3>
-        <p>Active Questions</p>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon inactive">
-        <i class="fas fa-pause-circle"></i>
-      </div>
-      <div class="stat-info">
-        <h3>{{getInactiveQuestionsCount()}}</h3>
-        <p>Inactive Questions</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Table Section -->
-  <div class="table-section">
-    <div class="section-header">
-      <h2>Questions List</h2>
-      <div class="table-controls">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" placeholder="Search questions..." (input)="filterQuestions($event)">
-        </div>
-        <div class="filter-controls">
-          <select class="form-control" (change)="filterByStatus($event)">
-            <option value="all">All Status</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-   <div class="table-responsive">
-    <table class="table table-hover">
+  <!-- Table -->
+  <div class="table-container">
+    <table class="data-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Topic</th>
-          <th>SubTopic</th>
-          <th>Question</th>
-          <th>Formula</th>
-          <th>Type</th>
-          <th>Priority</th>
+          <th>Id</th>
+          <th>Topic Name</th>
+          <th>SubTopic Name</th>
+          <th>Question Name</th>
           <th>Default Value</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th>Formula</th>
+          <th>Priority</th>
+          <th>Active</th>
+          <th>Edit</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let q of filteredQuestions">
-          <td class="id-column">{{q.id}}</td>
-          <td class="topic-column">{{q.topicName}}</td>
-          <td class="subtopic-column">{{q.subTopicName || '-'}}</td>
-          <td class="question-column">
-            <div class="question-text">{{q.name}}</div>
+        <tr *ngIf="loading">
+          <td colspan="9" class="loading">Loading questions...</td>
+        </tr>
+        <tr *ngFor="let question of questions; trackBy: trackByQuestionId" [hidden]="loading">
+          <td>{{question.id}}</td>
+          <td>{{getTopicName(question)}}</td>
+          <td>{{getSubTopicName(question)}}</td>
+          <td>{{question.question}}</td>
+          <td>{{question.defaultVal || 'NONE'}}</td>
+          <td>{{question.formula || ''}}</td>
+          <td>
+            <span class="priority-badge">{{question.priority || 0}}</span>
           </td>
-          <td class="formula-column">
-            <div class="formula-content" *ngIf="q.formula && q.formula !== ''">
-              <span class="formula-badge">
-                <i class="fas fa-calculator"></i>
-                {{q.formula}}
-              </span>
-            </div>
-            <div class="no-formula" *ngIf="!q.formula || q.formula === ''">
-              <span class="text-muted">No formula</span>
-            </div>
-          </td>
-          <td class="type-column">
-            <span class="type-badge" [ngClass]="'type-' + q.type?.toLowerCase()">{{q.type}}</span>
-          </td>
-          <td class="priority-column">
-            <span class="priority-badge" [ngClass]="getPriorityClass(q.priority)">{{q.priority}}</span>
-          </td>
-          <td class="default-column">
-            <span class="default-badge" *ngIf="q.default && q.default !== 'NONE'">{{q.default}}</span>
-            <span class="text-muted" *ngIf="!q.default || q.default === 'NONE'">-</span>
-          </td>
-          <td class="status-column">
-            <span class="status-badge" [ngClass]="q.active ? 'active' : 'inactive'">
-              {{q.active ? 'Active' : 'Inactive'}}
+          <td>
+            <span class="status-badge" [class.active]="question.active" [class.inactive]="!question.active">
+              {{question.active ? 'YES' : 'NO'}}
             </span>
           </td>
-          <td class="actions-column">
-            <button type="button" class="btn btn-sm btn-edit" 
-                    (click)="openEditModal(q)" *ngIf="EDQSTN">
-              <i class="fas fa-edit"></i> Edit
-            </button>
+          <td>
+            <div class="action-buttons">
+              <button class="edit-btn" (click)="editQuestion(question)">Edit</button>
+              <button 
+                class="deactivate-btn" 
+                [class.activate]="!question.active"
+                (click)="toggleQuestionStatus(question)"
+              >
+                {{question.active ? 'Deactivate' : 'Activate'}}
+              </button>
+              <!-- <button class="delete-btn" (click)="deleteQuestion(question)">Delete</button> -->
+            </div>
           </td>
+        </tr>
+        <tr *ngIf="questions.length === 0 && !loading">
+          <td colspan="9" class="no-data">No questions found matching your search criteria.</td>
         </tr>
       </tbody>
     </table>
-    <div class="no-results" *ngIf="filteredQuestions.length === 0">
-      <i class="fas fa-search"></i>
-      <p>No questions found matching your criteria</p>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container" *ngIf="totalRecords > 0">
+    <div class="pagination-info">
+      Showing {{getStartEntry()}} to {{getEndEntry()}} of {{totalRecords}} entries
     </div>
-  </div>
-  </div>
-
-  <!-- Add/Edit Question Modal -->
-  <div class="modal fade" id="addQuestionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <form (ngSubmit)="saveQuestion()" #addQuestionForm="ngForm">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fas" [ngClass]="isEditMode ? 'fa-edit' : 'fa-plus'"></i>
-              {{ isEditMode ? 'Edit Question' : 'Add New Question' }}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-
-          <div class="modal-body">
-            <div class="form-row">
-              <div class="form-group col-md-6">
-                <label for="topicId">Topic <span class="required">*</span></label>
-                <select class="form-control" id="topicId"
-                        required
-                        [(ngModel)]="newQuestion.topicId"
-                        name="topicId"
-                        (change)="onTopicChange()">
-                  <option value="">Select Topic</option>
-                  <option *ngFor="let t of topics" [value]="t.id">{{t.topicName}}</option>
-                </select>
-              </div>
-
-              <div class="form-group col-md-6">
-                <label for="subtopicId">SubTopic</label>
-                <select class="form-control" id="subtopicId"
-                        [(ngModel)]="newQuestion.subtopicId"
-                        name="subtopicId">
-                  <option value="">Select SubTopic</option>
-                  <option *ngFor="let st of subtopics" [value]="st.id">{{st.subTopicName}}</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="questionName">Question <span class="required">*</span></label>
-              <input type="text" class="form-control" id="questionName"
-                     [(ngModel)]="newQuestion.name"
-                     name="name" required placeholder="Enter the question text">
-            </div>
-
-            <div class="form-row">
-              <div class="form-group col-md-4">
-                <label for="priority">Priority <span class="required">*</span></label>
-                <input type="number" min="0" class="form-control" id="priority"
-                       [(ngModel)]="newQuestion.priority"
-                       name="priority" required>
-                <small class="form-text text-muted">Lower numbers = higher priority</small>
-              </div>
-
-              <div class="form-group col-md-4">
-                <label for="type">Type <span class="required">*</span></label>
-                <select class="form-control" id="type"
-                        [(ngModel)]="newQuestion.type"
-                        name="type" required>
-                  <option value="Text">Text</option>
-                  <option value="Date">Date</option>
-                  <option value="Number">Number</option>
-                  <option value="Price">Price</option>
-                  <option value="MultiChoice">MultiChoice</option>
-                </select>
-              </div>
-
-              <div class="form-group col-md-4">
-                <label for="default">Default Value</label>
-                <select class="form-control" id="default"
-                        [(ngModel)]="newQuestion.default"
-                        name="default"
-                        (change)="onDefaultChange()">
-                  <option value="NONE">NONE</option>
-                  <option value="PREVIOUS">PREVIOUS</option>
-                  <option value="QUESTION">QUESTION</option>
-                  <option value="PS">PS</option>
-                  <option value="SUB">Subdivision</option>
-                  <option value="CIRCLE">Circle</option>
-                  <option value="PSOP">PS/OP</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="formula">Formula (Optional)</label>
-              <input type="text" class="form-control" id="formula"
-                     [(ngModel)]="newQuestion.formula"
-                     name="formula"
-                     placeholder="e.g. q1+q2">
-              <small class="form-text text-muted">Use IDs of other questions (example: q11 + q12)</small>
-            </div>
-
-            <div class="form-group" *ngIf="isEditMode">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="active"
-                       [(ngModel)]="newQuestion.active" name="active">
-                <label class="form-check-label" for="active">Active Question</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary" [disabled]="!addQuestionForm.form.valid">
-              <i class="fas fa-save"></i> {{ isEditMode ? 'Update' : 'Save' }} Question
-            </button>
-          </div>
-        </form>
+    <nav aria-label="Table pagination">
+      <div class="pagination">
+        <button 
+          class="page-btn" 
+          [disabled]="currentPage === 1" 
+          (click)="goToPage(currentPage - 1)"
+          aria-label="Previous page"
+        >
+          Previous
+        </button>
+        <button 
+          *ngFor="let page of getPageNumbers()" 
+          class="page-btn" 
+          [class.active]="page === currentPage"
+          [class.ellipsis]="page === -1"
+          [disabled]="page === -1"
+          (click)="page !== -1 ? goToPage(page) : null"
+          [attr.aria-label]="page === -1 ? 'More pages' : 'Page ' + page"
+          [attr.aria-current]="page === currentPage ? 'page' : null"
+        >
+          {{page === -1 ? '...' : page}}
+        </button>
+        <button 
+          class="page-btn" 
+          [disabled]="currentPage === getTotalPages()" 
+          (click)="goToPage(currentPage + 1)"
+          aria-label="Next page"
+        >
+          Next
+        </button>
       </div>
+    </nav>
+  </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{isEditing ? 'Edit Question' : 'Add Question'}}</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form #questionForm="ngForm">
+        <div class="form-group">
+          <label for="topicSelect">Topic <span class="required">*</span></label>
+          <select 
+            id="topicSelect"
+            class="form-control"
+            [(ngModel)]="formData.topicId" 
+            name="topicId"
+            required
+            (change)="onTopicChange()"
+            [disabled]="loadingTopics"
+          >
+            <option value="">{{loadingTopics ? 'Loading topics...' : 'Select Topic'}}</option>
+            <option *ngFor="let topic of topics" [value]="topic.id">{{topic.topicName}}</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="subTopicSelect">SubTopic</label>
+          <select 
+            id="subTopicSelect"
+            class="form-control"
+            [(ngModel)]="formData.subTopicId" 
+            name="subTopicId"
+            [disabled]="!formData.topicId || loadingSubTopics"
+          >
+            <option value="">{{loadingSubTopics ? 'Loading sub-topics...' : 'Select SubTopic'}}</option>
+            <option *ngFor="let subTopic of filteredSubTopics" [value]="subTopic.id">{{subTopic.subTopicName}}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="questionName">Question <span class="required">*</span></label>
+          <textarea 
+            id="questionName"
+            class="form-control"
+            [(ngModel)]="formData.question" 
+            name="question"
+            required
+            placeholder="Enter question text"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="priority">Priority</label>
+          <input 
+            type="number" 
+            id="priority"
+            class="form-control"
+            [(ngModel)]="formData.priority" 
+            name="priority"
+            min="1"
+            placeholder="Enter priority"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="type">Question Type</label>
+          <select 
+            id="type"
+            class="form-control"
+            [(ngModel)]="formData.type" 
+            name="type"
+          >
+            <option value="">Select Type</option>
+            <option value="TEXT">Text</option>
+            <option value="NUMBER">Number</option>
+            <option value="BOOLEAN">Boolean</option>
+            <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+            <option value="RATING">Rating</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="defaultVal">Default Value</label>
+          <input 
+            type="text"
+            id="defaultVal"
+            class="form-control"
+            [(ngModel)]="formData.defaultVal" 
+            name="defaultVal"
+            placeholder="Enter default value"
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="formData.isPrevious" 
+                name="isPrevious"
+              />
+              <span class="checkmark">Show Previous</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="formData.isCumulative" 
+                name="isCumulative"
+              />
+              <span class="checkmark">Show Cumulative</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="formula">Question Formula</label>
+          <textarea 
+            id="formula"
+            class="form-control"
+            [(ngModel)]="formData.formula" 
+            name="formula"
+            rows="3"
+            placeholder="Enter question formula"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="defaultQue">Default Question ID</label>
+          <input 
+            type="number"
+            id="defaultQue"
+            class="form-control"
+            [(ngModel)]="formData.defaultQue" 
+            name="defaultQue"
+            placeholder="Enter default question ID"
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="formData.active" 
+                name="active"
+              />
+              <span class="checkmark">Active</span>
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="resetForm()">Reset Formula</button>
+      <button class="cancel-btn" (click)="closeModal()">Close</button>
+      <button 
+        class="save-btn" 
+        [disabled]="!formData.question || !formData.topicId"
+        (click)="saveQuestion()"
+      >
+        {{isEditing ? 'Update' : 'Save'}}
+      </button>
     </div>
   </div>
-
 </div>

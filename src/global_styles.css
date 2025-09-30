@@ -1,3 +1,6 @@
+/* Global Table Design Import */
+@import './styles/global-table.css';
+
 /* Reset and base styles */
 * {
   margin: 0;
