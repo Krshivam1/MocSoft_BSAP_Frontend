@@ -1,20 +1,20 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 
-interface Menu {
-  id: number;
-  menuName: string;
-}
+
+import { Component, OnInit } from '@angular/core';
+import { ApiService, Menu, ApiResponse } from '../../services/api.service';
 
 interface SubMenu {
   id: number;
   menuId: number;
-  parentSubMenuId?: number;
-  name: string;
-  url: string;
+  parentId?: number;
+  subMenuName: string;
+  subMenuUrl: string;
   priority: number;
   active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 @Component({
@@ -49,38 +49,41 @@ export class SubmenusComponent implements OnInit {
   // Current data
   currentSubmenu: SubMenu = this.createEmptySubmenu();
 
-  // Mock data
-  private mockMenus: Menu[] = [
-    { id: 1, menuName: 'Dashboard' },
-    { id: 2, menuName: 'Reports' },
-    { id: 3, menuName: 'User Management' },
-    { id: 4, menuName: 'Settings' },
-    { id: 5, menuName: 'Analytics' }
-  ];
 
-  private mockSubmenus: SubMenu[] = [
-    { id: 1, menuId: 1, name: 'Overview', url: '/dashboard/overview', priority: 1, active: true },
-    { id: 2, menuId: 1, name: 'Statistics', url: '/dashboard/stats', priority: 2, active: true },
-    { id: 3, menuId: 2, name: 'Monthly Report', url: '/reports/monthly', priority: 1, active: true },
-    { id: 4, menuId: 2, name: 'Annual Report', url: '/reports/annual', priority: 2, active: false },
-    { id: 5, menuId: 3, name: 'User List', url: '/users/list', priority: 1, active: true },
-    { id: 6, menuId: 3, name: 'User Roles', url: '/users/roles', priority: 2, active: true },
-    { id: 7, menuId: 4, name: 'System Settings', url: '/settings/system', priority: 1, active: true },
-    { id: 8, menuId: 4, name: 'User Preferences', url: '/settings/preferences', priority: 2, active: false },
-    { id: 9, menuId: 5, name: 'Performance', url: '/analytics/performance', priority: 1, active: true },
-    { id: 10, menuId: 5, name: 'Insights', url: '/analytics/insights', priority: 2, active: true }
-  ];
+  constructor(private apiService: ApiService) {}
+
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadMenus();
+    this.loadSubMenus();
   }
 
-  // Data loading
-  loadData(): void {
-    this.menus = [...this.mockMenus];
-    this.submenus = [...this.mockSubmenus];
-    this.filteredData = [...this.submenus];
-    this.updatePagination();
+  // Load menus for dropdown
+  loadMenus(): void {
+    this.apiService.getMenus(1, 100).subscribe({
+      next: (res: ApiResponse<Menu[]>) => {
+        this.menus = res.data || [];
+      },
+      error: err => {
+        this.menus = [];
+      }
+    });
+  }
+
+  // Load submenus
+  loadSubMenus(): void {
+    this.apiService.getSubMenus(this.currentPage, this.pageSize, this.searchTerm, this.sortColumn, this.sortDirection).subscribe({
+      next: (res: ApiResponse<SubMenu[]>) => {
+        this.submenus = res.data || [];
+        this.filteredData = [...this.submenus];
+        this.updatePagination();
+      },
+      error: err => {
+        this.submenus = [];
+        this.filteredData = [];
+        this.updatePagination();
+      }
+    });
   }
 
   // Helper methods
@@ -88,8 +91,8 @@ export class SubmenusComponent implements OnInit {
     return {
       id: 0,
       menuId: 0,
-      name: '',
-      url: '',
+      subMenuName: '',
+      subMenuUrl: '',
       priority: 1,
       active: true
     };
@@ -112,8 +115,8 @@ export class SubmenusComponent implements OnInit {
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(submenu =>
-        submenu.name.toLowerCase().includes(term) ||
-        submenu.url.toLowerCase().includes(term) ||
+        submenu.subMenuName.toLowerCase().includes(term) ||
+        submenu.subMenuUrl.toLowerCase().includes(term) ||
         this.getMenuName(submenu.menuId).toLowerCase().includes(term) ||
         submenu.priority.toString().includes(term)
       );
@@ -202,38 +205,50 @@ export class SubmenusComponent implements OnInit {
     this.showModal = true;
   }
 
+
   addSubmenu(): void {
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const newId = Math.max(...this.submenus.map(s => s.id), 0) + 1;
-      this.currentSubmenu.id = newId;
-      this.currentSubmenu.active = this.currentSubmenu.active || false;
-      this.submenus.unshift({ ...this.currentSubmenu });
-      this.applyFilters();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
+    this.apiService.createSubMenu(this.currentSubmenu).subscribe({
+      next: (res: ApiResponse<SubMenu>) => {
+        this.isLoading = false;
+        if (res.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadSubMenus();
+        }
+      },
+      error: err => {
+        this.isLoading = false;
+      }
+    });
   }
+
 
   updateSubmenu(): void {
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const index = this.submenus.findIndex(s => s.id === this.currentSubmenu.id);
-      if (index !== -1) {
-        this.submenus[index] = { ...this.currentSubmenu };
+    this.apiService.updateSubMenu(this.currentSubmenu.id, this.currentSubmenu).subscribe({
+      next: (res: ApiResponse<SubMenu>) => {
+        this.isLoading = false;
+        if (res.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadSubMenus();
+        }
+      },
+      error: err => {
+        this.isLoading = false;
       }
-      this.applyFilters();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
+    });
   }
 
+
   toggleSubmenuStatus(submenu: SubMenu): void {
-    submenu.active = !submenu.active;
-    // Here you would typically make an API call to update the status
-    console.log(`Submenu ${submenu.id} status updated to: ${submenu.active}`);
+    this.apiService.toggleSubMenuStatus(submenu.id, !submenu.active).subscribe({
+      next: (res: ApiResponse<SubMenu>) => {
+        if (res.status === 'SUCCESS') {
+          submenu.active = !submenu.active;
+        }
+      },
+      error: err => {}
+    });
   }
 
   // Pagination helper methods

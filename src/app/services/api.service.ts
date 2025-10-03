@@ -3,6 +3,56 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment';
 
+export interface Menu {
+  id: number;
+  menuName: string;
+  menuUrl: string;
+  priority: number;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Permission {
+  id: number;
+  permissionName: string;
+  permissionCode: string;
+  permissionUrl?: string;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Role {
+  id: number;
+  roleName: string;
+  description?: string;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+
+export interface SubMenu {
+  id: number;
+  menuId: number;
+  parentId?: number;
+  subMenuName: string;
+  subMenuUrl: string;
+  priority: number;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ApiResponse<T> {
   status: 'SUCCESS' | 'ERROR';
   message: string;
@@ -693,5 +743,472 @@ export class ApiService {
       { headers: this.headersWithToken = this.getHeaders('application/json') }
     );
   }
+
+
+
+getMenus(
+    page: number = 1, 
+    limit: number = 10, 
+    search?: string, 
+    sortBy: string = 'priority', 
+    sortOrder: string = 'ASC',
+    status?: string
+  ): Observable<ApiResponse<Menu[]>> {
+    let params = `?page=${page}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    
+    if (search && search.trim()) {
+      params += `&search=${encodeURIComponent(search)}`;
+    }
+    if (status) {
+      params += `&status=${status}`;
+    }
+    
+  return this.http.get<ApiResponse<Menu[]>>(
+      `${this.baseUrl}menus${params}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+
+  getMenuById(id: number): Observable<ApiResponse<Menu>> {
+    return this.http.get<ApiResponse<Menu>>(
+      `${this.baseUrl}menus/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+
+  createMenu(data: Partial<Menu>): Observable<ApiResponse<Menu>> {
+    return this.http.post<ApiResponse<Menu>>(
+      `${this.baseUrl}menus`,
+      data,
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+  updateMenu(id: number, data: Partial<Menu>): Observable<ApiResponse<Menu>> {
+    return this.http.put<ApiResponse<Menu>>(
+      `${this.baseUrl}menus/${id}`,
+      data,
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+  deleteMenu(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.baseUrl}menus/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  activateMenu(id: number): Observable<ApiResponse<Menu>> {
+    return this.http.post<ApiResponse<Menu>>(
+      `${this.baseUrl}menus/${id}/activate`,
+      {},
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  deactivateMenu(id: number): Observable<ApiResponse<Menu>> {
+    return this.http.post<ApiResponse<Menu>>(
+      `${this.baseUrl}menus/${id}/deactivate`,
+      {},
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+  toggleMenuStatus(id: number, active: boolean): Observable<ApiResponse<Menu>> {
+    if (active) {
+      return this.activateMenu(id);
+    } else {
+      return this.deactivateMenu(id);
+    }
+  }
+
+
+  updateMenuOrder(id: number, priority: number): Observable<ApiResponse<Menu>> {
+    return this.http.put<ApiResponse<Menu>>(
+      `${this.baseUrl}menus/${id}/order`,
+      { priority },
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+  getActiveMenus(): Observable<ApiResponse<Menu[]>> {
+    return this.http.get<ApiResponse<Menu[]>>(
+      `${this.baseUrl}menus/active`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+
+  searchMenus(searchTerm: string, page: number = 1, limit: number = 10): Observable<ApiResponse<Menu[]>> {
+    return this.http.get<ApiResponse<Menu[]>>(
+      `${this.baseUrl}menus/search/${searchTerm}?page=${page}&limit=${limit}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+
+  getUserMenus(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}menus/user`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+
+  getMenuDropdown(): Observable<ApiResponse<Menu[]>> {
+    return this.http.get<ApiResponse<Menu[]>>(
+      `${this.baseUrl}menus/active`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+
+  bulkUpdatePriorities(updates: { id: number; priority: number }[]): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.baseUrl}menus/bulk/priorities`,
+      { updates },
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+  bulkUpdateStatus(menuIds: number[], active: boolean): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.baseUrl}menus/bulk/status`,
+      { menuIds, active },
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+
+
+
+getSubMenus(
+  page: number = 1,
+  limit: number = 10,
+  search?: string,
+  sortBy: string = 'priority',
+  sortOrder: string = 'ASC',
+  status?: string
+): Observable<ApiResponse<SubMenu[]>> {
+  let params = `?page=${page}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+  if (search && search.trim()) {
+    params += `&search=${encodeURIComponent(search)}`;
+  }
+  if (status) {
+    params += `&status=${status}`;
+  }
+  return this.http.get<ApiResponse<SubMenu[]>>(
+  this.baseUrl + "sub-menus" + params,
+    { headers: this.getHeaders() }
+  );
+}
+
+getSubMenuById(id: number): Observable<ApiResponse<SubMenu>> {
+  return this.http.get<ApiResponse<SubMenu>>(
+  this.baseUrl + "sub-menus/" + id,
+    { headers: this.getHeaders() }
+  );
+}
+
+createSubMenu(data: Partial<SubMenu>): Observable<ApiResponse<SubMenu>> {
+  return this.http.post<ApiResponse<SubMenu>>(
+  this.baseUrl + "sub-menus",
+    data,
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+updateSubMenu(id: number, data: Partial<SubMenu>): Observable<ApiResponse<SubMenu>> {
+  return this.http.put<ApiResponse<SubMenu>>(
+  this.baseUrl + "sub-menus/" + id,
+    data,
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+deleteSubMenu(id: number): Observable<ApiResponse<any>> {
+  return this.http.delete<ApiResponse<any>>(
+  this.baseUrl + "sub-menus/" + id,
+    { headers: this.getHeaders() }
+  );
+}
+
+activateSubMenu(id: number): Observable<ApiResponse<SubMenu>> {
+  return this.http.post<ApiResponse<SubMenu>>(
+  this.baseUrl + "sub-menus/" + id + "/activate",
+    {},
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+deactivateSubMenu(id: number): Observable<ApiResponse<SubMenu>> {
+  return this.http.post<ApiResponse<SubMenu>>(
+  this.baseUrl + "sub-menus/" + id + "/deactivate",
+    {},
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+toggleSubMenuStatus(id: number, active: boolean): Observable<ApiResponse<SubMenu>> {
+  if (active) {
+    return this.activateSubMenu(id);
+  } else {
+    return this.deactivateSubMenu(id);
+  }
+}
+
+updateSubMenuOrder(id: number, priority: number): Observable<ApiResponse<SubMenu>> {
+  return this.http.put<ApiResponse<SubMenu>>(
+  this.baseUrl + "sub-menus/" + id + "/order",
+    { priority },
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+getActiveSubMenus(): Observable<ApiResponse<SubMenu[]>> {
+  return this.http.get<ApiResponse<SubMenu[]>>(
+  this.baseUrl + "sub-menus/active",
+    { headers: this.getHeaders() }
+  );
+}
+
+searchSubMenus(searchTerm: string, page: number = 1, limit: number = 10): Observable<ApiResponse<SubMenu[]>> {
+  return this.http.get<ApiResponse<SubMenu[]>>(
+  this.baseUrl + `sub-menus/search/${searchTerm}?page=${page}&limit=${limit}`,
+    { headers: this.getHeaders() }
+  );
+}
+
+getSubMenusByMenu(menuId: number, page: number = 1, limit: number = 10): Observable<ApiResponse<SubMenu[]>> {
+  return this.http.get<ApiResponse<SubMenu[]>>(
+  this.baseUrl + `sub-menus/by-menu/${menuId}?page=${page}&limit=${limit}`,
+    { headers: this.getHeaders() }
+  );
+}
+
+getSubMenusByParent(parentId: number, page: number = 1, limit: number = 10): Observable<ApiResponse<SubMenu[]>> {
+  return this.http.get<ApiResponse<SubMenu[]>>(
+  this.baseUrl + `sub-menus/by-parent/${parentId}?page=${page}&limit=${limit}`,
+    { headers: this.getHeaders() }
+  );
+}
+
+
+
+
+
+// Get all roles (with optional pagination, search, status)
+getRoles(page: number = 1, limit: number = 10, search?: string, status?: string): Observable<ApiResponse<Role[]>> {
+  let params = `?page=${page}&limit=${limit}`;
+  if (search && search.trim()) {
+    params += `&search=${encodeURIComponent(search)}`;
+  }
+  if (status) {
+    params += `&status=${status}`;
+  }
+  return this.http.get<ApiResponse<Role[]>>(
+    this.baseUrl + 'roles' + params,
+    { headers: this.getHeaders() }
+  );
+}
+
+getRoleById(id: number): Observable<ApiResponse<Role>> {
+  return this.http.get<ApiResponse<Role>>(
+    this.baseUrl + 'roles/' + id,
+    { headers: this.getHeaders() }
+  );
+}
+
+createRole(data: Partial<Role>): Observable<ApiResponse<Role>> {
+  return this.http.post<ApiResponse<Role>>(
+    this.baseUrl + 'roles',
+    data,
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+// Update an existing role
+updateRole(id: number, data: Partial<Role>): Observable<ApiResponse<Role>> {
+  return this.http.put<ApiResponse<Role>>(
+    this.baseUrl + 'roles/' + id,
+    data,
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+deleteRole(id: number): Observable<ApiResponse<any>> {
+  return this.http.delete<ApiResponse<any>>(
+    this.baseUrl + 'roles/' + id,
+    { headers: this.getHeaders() }
+  );
+}
+
+activateRole(id: number): Observable<ApiResponse<Role>> {
+  return this.http.post<ApiResponse<Role>>(
+    this.baseUrl + 'roles/' + id + '/activate',
+    {},
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+deactivateRole(id: number): Observable<ApiResponse<Role>> {
+  return this.http.post<ApiResponse<Role>>(
+    this.baseUrl + 'roles/' + id + '/deactivate',
+    {},
+    { headers: this.getHeaders('application/json') }
+  );
+}
+
+getActiveRoles(): Observable<ApiResponse<Role[]>> {
+  return this.http.get<ApiResponse<Role[]>>(
+    this.baseUrl + 'roles/active',
+    { headers: this.getHeaders() }
+  );
+}
+
+searchRoles(searchTerm: string, page: number = 1, limit: number = 10): Observable<ApiResponse<Role[]>> {
+  return this.http.get<ApiResponse<Role[]>>(
+    this.baseUrl + `roles/search/${searchTerm}?page=${page}&limit=${limit}`,
+    { headers: this.getHeaders() }
+  );
+}
+
+  /**
+   * Get all permissions with pagination and filtering
+   */
+  getPermissions(
+    page: number = 1, 
+    limit: number = 10, 
+    search?: string, 
+    sortBy: string = 'permissionName', 
+    sortOrder: string = 'ASC',
+    status?: string
+  ): Observable<ApiResponse<Permission[]>> {
+    let params = `?page=${page}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    
+    if (search && search.trim()) {
+      params += `&search=${encodeURIComponent(search)}`;
+    }
+    if (status) {
+      params += `&status=${status}`;
+    }
+    
+    return this.http.get<ApiResponse<Permission[]>>(
+      `${this.baseUrl}permissions${params}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getPermissionById(id: number): Observable<ApiResponse<Permission>> {
+    return this.http.get<ApiResponse<Permission>>(
+      `${this.baseUrl}permissions/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getPermissionByCode(code: string): Observable<ApiResponse<Permission>> {
+    return this.http.get<ApiResponse<Permission>>(
+      `${this.baseUrl}permissions/by-code/${code}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  createPermission(data: Partial<Permission>): Observable<ApiResponse<Permission>> {
+    return this.http.post<ApiResponse<Permission>>(
+      `${this.baseUrl}permissions`,
+      data,
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  updatePermission(id: number, data: Partial<Permission>): Observable<ApiResponse<Permission>> {
+    return this.http.put<ApiResponse<Permission>>(
+      `${this.baseUrl}permissions/${id}`,
+      data,
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  deletePermission(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.baseUrl}permissions/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  activatePermission(id: number): Observable<ApiResponse<Permission>> {
+    return this.http.post<ApiResponse<Permission>>(
+      `${this.baseUrl}permissions/${id}/activate`,
+      {},
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  deactivatePermission(id: number): Observable<ApiResponse<Permission>> {
+    return this.http.post<ApiResponse<Permission>>(
+      `${this.baseUrl}permissions/${id}/deactivate`,
+      {},
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  togglePermissionStatus(id: number, active: boolean): Observable<ApiResponse<Permission>> {
+    if (active) {
+      return this.activatePermission(id);
+    } else {
+      return this.deactivatePermission(id);
+    }
+  }
+
+  getActivePermissions(): Observable<ApiResponse<Permission[]>> {
+    return this.http.get<ApiResponse<Permission[]>>(
+      `${this.baseUrl}permissions/active`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  searchPermissions(searchTerm: string, page: number = 1, limit: number = 10): Observable<ApiResponse<Permission[]>> {
+    return this.http.get<ApiResponse<Permission[]>>(
+      `${this.baseUrl}permissions/search/${searchTerm}?page=${page}&limit=${limit}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getPermissionDropdown(): Observable<ApiResponse<Permission[]>> {
+    return this.http.get<ApiResponse<Permission[]>>(
+      `${this.baseUrl}permissions/active`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getPermissionStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}permissions/stats/overview`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  bulkUpdatePermissionStatus(permissionIds: number[], active: boolean): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.baseUrl}permissions/bulk/status`,
+      { permissionIds, active },
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+
+
+
+  
 
 }

@@ -51,9 +51,9 @@
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th (click)="sortTable('name')" class="sortable">
+          <th (click)="sortTable('subMenuName')" class="sortable">
             SubMenu Name
-            <span class="sort-icon" [class.active]="sortColumn === 'name'">
+            <span class="sort-icon" [class.active]="sortColumn === 'subMenuName'">
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
@@ -77,8 +77,8 @@
         <tr *ngFor="let submenu of paginatedData">
           <td>{{ submenu.id }}</td>
           <td>{{ getMenuName(submenu.menuId) }}</td>
-          <td>{{ submenu.name }}</td>
-          <td class="url-cell">{{ submenu.url }}</td>
+          <td>{{ submenu.subMenuName }}</td>
+          <td class="url-cell">{{ submenu.subMenuUrl }}</td>
           <td>{{ submenu.priority }}</td>
           <td>
             <span class="status-badge" [class.active]="submenu.active" [class.inactive]="!submenu.active">
@@ -177,7 +177,7 @@
                    id="submenuName"
                    name="submenuName"
                    class="form-control" 
-                   [(ngModel)]="currentSubmenu.name"
+                   [(ngModel)]="currentSubmenu.subMenuName"
                    required
                    #submenuNameInput="ngModel"
                    placeholder="Enter sub menu name">
@@ -192,7 +192,7 @@
                    id="submenuUrl"
                    name="submenuUrl"
                    class="form-control" 
-                   [(ngModel)]="currentSubmenu.url"
+                   [(ngModel)]="currentSubmenu.subMenuUrl"
                    required
                    #submenuUrlInput="ngModel"
                    placeholder="Enter sub menu URL">
@@ -280,7 +280,7 @@
                    id="editSubmenuName"
                    name="editSubmenuName"
                    class="form-control" 
-                   [(ngModel)]="currentSubmenu.name"
+                   [(ngModel)]="currentSubmenu.subMenuName"
                    required
                    #editSubmenuNameInput="ngModel"
                    placeholder="Enter sub menu name">
@@ -295,7 +295,7 @@
                    id="editSubmenuUrl"
                    name="editSubmenuUrl"
                    class="form-control" 
-                   [(ngModel)]="currentSubmenu.url"
+                   [(ngModel)]="currentSubmenu.subMenuUrl"
                    required
                    #editSubmenuUrlInput="ngModel"
                    placeholder="Enter sub menu URL">

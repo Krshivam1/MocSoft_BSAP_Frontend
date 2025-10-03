@@ -1,3 +1,4 @@
+<!-- Removed stray commented opening div -->
 <div class="data-container">
   <!-- Header -->
   <div class="header">
@@ -45,15 +46,15 @@
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th (click)="sortTable('name')" class="sortable">
+          <th (click)="sortTable('menuName')" class="sortable">
             Menu Name
-            <span class="sort-icon" [class.active]="sortColumn === 'name'">
+            <span class="sort-icon" [class.active]="sortColumn === 'menuName'">
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th (click)="sortTable('url')" class="sortable">
+          <th (click)="sortTable('menuUrl')" class="sortable">
             Menu URL
-            <span class="sort-icon" [class.active]="sortColumn === 'url'">
+            <span class="sort-icon" [class.active]="sortColumn === 'menuUrl'">
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
@@ -75,8 +76,8 @@
       <tbody>
         <tr *ngFor="let menu of paginatedMenus; trackBy: trackByMenuId">
           <td>{{ menu.id }}</td>
-          <td>{{ menu.name }}</td>
-          <td>{{ menu.url }}</td>
+          <td>{{ menu.menuName }}</td>
+          <td>{{ menu.menuUrl }}</td>
           <td>
             <span class="priority-badge">{{ menu.priority }}</span>
           </td>
@@ -126,8 +127,9 @@
         class="page-btn" 
         [class.active]="page === currentPage"
         (click)="goToPage(page)"
+        [disabled]="page === -1"
       >
-        {{ page }}
+        {{ page === -1 ? '...' : page }}
       </button>
       
       <button 
@@ -139,7 +141,7 @@
       </button>
     </div>
   </div>
-</div>
+
 
 <!-- Menu Modal -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
@@ -154,60 +156,60 @@
       
       <div class="modal-body">
         <form (ngSubmit)="isEditMode ? updateMenu() : addMenu()" #menuForm="ngForm">
-      <div class="form-group">
-        <label for="menuName" class="required">Menu Name</label>
-        <input 
-          type="text" 
-          id="menuName" 
-          name="menuName" 
-          [(ngModel)]="currentMenu.name" 
-          #menuName="ngModel"
-          required 
-          class="form-control"
-          [class.error]="menuName.touched && menuName.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="menuName.touched && menuName.errors?.['required']">
-          Menu name is required
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="menuName" class="required">Menu Name</label>
+            <input 
+              type="text" 
+              id="menuName" 
+              name="menuName" 
+              [(ngModel)]="currentMenu.menuName" 
+              #menuName="ngModel"
+              required 
+              class="form-control"
+              [class.error]="menuName.touched && menuName.errors?.['required']"
+            />
+            <div class="error-message" *ngIf="menuName.touched && menuName.errors?.['required']">
+              Menu name is required
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="menuUrl" class="required">Menu URL</label>
-        <input 
-          type="text" 
-          id="menuUrl" 
-          name="menuUrl" 
-          [(ngModel)]="currentMenu.url" 
-          #menuUrl="ngModel"
-          required 
-          class="form-control"
-          [class.error]="menuUrl.touched && menuUrl.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="menuUrl.touched && menuUrl.errors?.['required']">
-          Menu URL is required
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="menuUrl" class="required">Menu URL</label>
+            <input 
+              type="text" 
+              id="menuUrl" 
+              name="menuUrl" 
+              [(ngModel)]="currentMenu.menuUrl" 
+              #menuUrl="ngModel"
+              required 
+              class="form-control"
+              [class.error]="menuUrl.touched && menuUrl.errors?.['required']"
+            />
+            <div class="error-message" *ngIf="menuUrl.touched && menuUrl.errors?.['required']">
+              Menu URL is required
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="menuPriority" class="required">Priority</label>
-        <input 
-          type="number" 
-          id="menuPriority" 
-          name="menuPriority" 
-          [(ngModel)]="currentMenu.priority" 
-          #menuPriority="ngModel"
-          required 
-          min="1"
-          class="form-control"
-          [class.error]="menuPriority.touched && (menuPriority.errors?.['required'] || menuPriority.errors?.['min'])"
-        />
-        <div class="error-message" *ngIf="menuPriority.touched && menuPriority.errors?.['required']">
-          Priority is required
-        </div>
-        <div class="error-message" *ngIf="menuPriority.touched && menuPriority.errors?.['min']">
-          Priority must be at least 1
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="menuPriority" class="required">Priority</label>
+            <input 
+              type="number" 
+              id="menuPriority" 
+              name="menuPriority" 
+              [(ngModel)]="currentMenu.priority" 
+              #menuPriority="ngModel"
+              required 
+              min="1"
+              class="form-control"
+              [class.error]="menuPriority.touched && (menuPriority.errors?.['required'] || menuPriority.errors?.['min'])"
+            />
+            <div class="error-message" *ngIf="menuPriority.touched && menuPriority.errors?.['required']">
+              Priority is required
+            </div>
+            <div class="error-message" *ngIf="menuPriority.touched && menuPriority.errors?.['min']">
+              Priority must be at least 1
+            </div>
+          </div>
 
           <div class="form-group">
             <div class="checkbox-group">

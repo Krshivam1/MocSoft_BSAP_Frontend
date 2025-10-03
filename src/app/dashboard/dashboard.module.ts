@@ -34,7 +34,8 @@ import { PerformanceComponent } from './performance/performance.component';
     HomeComponent,
     SettingsComponent,
     ProfileComponent,
-    PerformanceComponent
+    PerformanceComponent,
+    
   ],
   declarations: [
     UsersComponent,

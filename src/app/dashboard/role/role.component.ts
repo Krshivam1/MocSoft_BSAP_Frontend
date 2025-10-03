@@ -1,10 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { ApiService, ApiResponse, Role } from '../../services/api.service';
 
-interface Role {
-  id: number;
-  roleName: string;
-  active: boolean;
-}
 
 @Component({
   selector: 'app-role',
@@ -13,44 +9,124 @@ interface Role {
 })
 export class RoleComponent implements OnInit {
   
-  // Properties for table data
   roles: Role[] = [];
   filteredRoles: Role[] = [];
   paginatedRoles: Role[] = [];
+  currentRole: Role = this.createEmptyRole();
+  showRoleModal: boolean = false;
+  isRoleEditMode: boolean = false;
   
-  // Properties for search and pagination
   searchTerm: string = '';
   pageSize: number = 10;
   currentPage: number = 1;
   totalRoles: number = 0;
   originalTotalRoles: number = 0;
   
-  // Properties for sorting
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor() { }
+  constructor(private apiService: ApiService) { }
 
   ngOnInit(): void {
-    this.initializeData();
+    this.loadRoles();
   }
 
-  // Initialize mock data - replace with API call later
-  initializeData(): void {
-    this.roles = [
-      { id: 1, roleName: 'ADMIN', active: true },
-      { id: 2, roleName: 'DGP', active: true },
-      { id: 3, roleName: 'IG', active: true },
-      { id: 4, roleName: 'SUPPORT', active: true },
-      { id: 5, roleName: 'ADG HQ', active: true },
-      { id: 6, roleName: 'SP', active: true },
-      { id: 7, roleName: 'DIG', active: true }
-    ];
-    
-    this.originalTotalRoles = this.roles.length;
-    this.filteredRoles = [...this.roles];
-    this.totalRoles = this.filteredRoles.length;
-    this.updatePaginatedRoles();
+  loadRoles(): void {
+    this.apiService.getRoles(1, 100).subscribe({
+      next: (res: ApiResponse<Role[]>) => {
+        this.roles = res.data || [];
+        this.filteredRoles = [...this.roles];
+        this.totalRoles = this.filteredRoles.length;
+        this.updatePaginatedRoles();
+      },
+      error: err => {
+        this.roles = [];
+        this.filteredRoles = [];
+        this.totalRoles = 0;
+        this.updatePaginatedRoles();
+      }
+    });
+  }
+
+  createEmptyRole(): Role {
+    return {
+      id: 0,
+      roleName: '',
+      description: '',
+      active: true
+    };
+  }
+
+  showAddRoleModal(): void {
+    this.isRoleEditMode = false;
+    this.currentRole = this.createEmptyRole();
+    this.showRoleModal = true;
+  }
+
+  showEditRoleModal(role: Role): void {
+    this.isRoleEditMode = true;
+    this.currentRole = { ...role };
+    this.showRoleModal = true;
+  }
+
+  closeRoleModal(): void {
+    this.showRoleModal = false;
+    this.currentRole = this.createEmptyRole();
+    this.isRoleEditMode = false;
+  }
+
+  addRole(): void {
+    this.apiService.createRole(this.currentRole).subscribe({
+      next: (res: ApiResponse<Role>) => {
+        if (res.status === 'SUCCESS') {
+          this.closeRoleModal();
+          this.loadRoles();
+        }
+      }
+    });
+  }
+
+  updateRole(): void {
+    this.apiService.updateRole(this.currentRole.id, this.currentRole).subscribe({
+      next: (res: ApiResponse<Role>) => {
+        if (res.status === 'SUCCESS') {
+          this.closeRoleModal();
+          this.loadRoles();
+        }
+      }
+    });
+  }
+
+  deleteRole(role: Role): void {
+    if (confirm('Are you sure you want to delete this role?')) {
+      this.apiService.deleteRole(role.id).subscribe({
+        next: (res: ApiResponse<any>) => {
+          if (res.status === 'SUCCESS') {
+            this.loadRoles();
+          }
+        }
+      });
+    }
+  }
+
+  activateRole(role: Role): void {
+    this.apiService.activateRole(role.id).subscribe({
+      next: (res: ApiResponse<Role>) => {
+        if (res.status === 'SUCCESS') {
+          this.loadRoles();
+        }
+      }
+    });
+  }
+
+  deactivateRole(role: Role): void {
+    this.apiService.deactivateRole(role.id).subscribe({
+      next: (res: ApiResponse<Role>) => {
+        if (res.status === 'SUCCESS') {
+          this.loadRoles();
+        }
+      }
+    });
   }
 
   // Search functionality
@@ -67,17 +143,15 @@ export class RoleComponent implements OnInit {
     }
     
     this.totalRoles = this.filteredRoles.length;
-    this.currentPage = 1; // Reset to first page
+    this.currentPage = 1; 
     this.updatePaginatedRoles();
   }
 
-  // Page size change handler
   onPageSizeChange(): void {
-    this.currentPage = 1; // Reset to first page
+    this.currentPage = 1; 
     this.updatePaginatedRoles();
   }
 
-  // Sorting functionality
   sortTable(column: string): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -118,7 +192,6 @@ export class RoleComponent implements OnInit {
     this.updatePaginatedRoles();
   }
 
-  // Pagination methods
   updatePaginatedRoles(): void {
     const startIndex = (this.currentPage - 1) * this.pageSize;
     const endIndex = startIndex + this.pageSize;
@@ -164,31 +237,4 @@ export class RoleComponent implements OnInit {
     return Math.min(endRecord, this.totalRoles);
   }
 
-  // Action methods
-  addRole(): void {
-    // TODO: Implement add role functionality
-    // This could open a modal or navigate to add role page
-    console.log('Add role clicked');
-    alert('Add Role functionality will be implemented');
-  }
-
-  viewRole(role: Role): void {
-    // TODO: Implement view role functionality
-    console.log('View role:', role);
-    alert(`Viewing role: ${role.roleName}`);
-  }
-
-  toggleRoleStatus(role: Role): void {
-    // TODO: Implement API call to toggle role status
-    const action = role.active ? 'deactivate' : 'activate';
-    const confirmMessage = `Are you sure you want to ${action} the role "${role.roleName}"?`;
-    
-    if (confirm(confirmMessage)) {
-      role.active = !role.active;
-      console.log(`Role ${role.roleName} ${action}d`);
-      
-      // Update the display
-      this.updatePaginatedRoles();
-    }
-  }
 }

@@ -5,7 +5,7 @@
       <div class="icon">📋</div>
       <h1>List Of Roles</h1>
     </div>
-    <button class="add-btn" (click)="addRole()">Add Role</button>
+  <button class="add-btn" (click)="showAddRoleModal()">Add Role</button>
   </div>
 
   <!-- Table Controls -->
@@ -71,14 +71,60 @@
           </td>
           <td>
             <div class="action-buttons">
-              <button class="edit-btn" (click)="viewRole(role)">Edit</button>
+              <button class="edit-btn" (click)="showEditRoleModal(role)">Edit</button>
               <button 
                 class="deactivate-btn" 
                 [class.activate]="!role.active"
-                (click)="toggleRoleStatus(role)"
+                *ngIf="role.active"
+                (click)="deactivateRole(role)"
               >
-                {{ role.active ? 'Deactivate' : 'Activate' }}
+                Deactivate
               </button>
+              <button 
+                class="activate-btn" 
+                *ngIf="!role.active"
+                (click)="activateRole(role)"
+              >
+                Activate
+              </button>
+              <!-- <button class="delete-btn" (click)="deleteRole(role)">Delete</button> -->
+</div>
+
+<!-- Add/Edit Role Modal -->
+<div class="modal-overlay" *ngIf="showRoleModal" (click)="closeRoleModal()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{{ isRoleEditMode ? 'Edit Role' : 'Add Role' }}</h4>
+        <button type="button" class="close-btn" (click)="closeRoleModal()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="isRoleEditMode ? updateRole() : addRole()" #roleForm="ngForm">
+          <div class="form-group">
+            <label for="roleName">Role Name <span class="required">*</span></label>
+            <input type="text" id="roleName" name="roleName" class="form-control" [(ngModel)]="currentRole.roleName" required #roleNameInput="ngModel" placeholder="Enter role name">
+            <div class="error-message" *ngIf="roleNameInput.invalid && roleNameInput.touched">Role name is required</div>
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" id="description" name="description" class="form-control" [(ngModel)]="currentRole.description" placeholder="Enter description">
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="active" [(ngModel)]="currentRole.active">
+              <span class="checkmark">Active</span>
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="cancel-btn" (click)="closeRoleModal()">Close</button>
+            <button type="submit" class="save-btn" [disabled]="roleForm.invalid">{{ isRoleEditMode ? 'Update' : 'Save' }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
             </div>
           </td>
         </tr>

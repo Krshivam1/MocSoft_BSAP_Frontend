@@ -1,83 +1,70 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 
-interface Permission {
-  id: number;
-  name: string;
-  code: string;
-  url: string;
-  active: boolean;
-}
+import { Component, OnInit } from '@angular/core';
+import { ApiService, Permission, ApiResponse } from '../../services/api.service';
 
 @Component({
   selector: 'app-permissions',
   templateUrl: './permissions.component.html',
-  styleUrl: './permissions.component.css'
+  styleUrls: ['./permissions.component.css']
 })
 export class PermissionsComponent implements OnInit {
   permissions: Permission[] = [];
-  filteredPermissions: Permission[] = [];
   searchTerm: string = '';
   currentPage: number = 1;
   pageSize: number = 10;
   totalPages: number = 1;
+  totalItems: number = 0;
 
-  // Modal and form states
   showModal = false;
   isEditMode = false;
   isLoading = false;
-  currentPermission: Permission = { id: 0, name: '', code: '', url: '', active: true };
+  currentPermission: Permission = { id: 0, permissionName: '', permissionCode: '', permissionUrl: '', active: true };
   
-  // Sorting
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor() {}
+  constructor(private apiService: ApiService) {}
 
   ngOnInit() {
-    this.permissions = [
-      { id: 1, name: 'View Users', code: 'VIEW_USER', url: '/users', active: true },
-      { id: 2, name: 'Edit Users', code: 'EDIT_USER', url: '/users/edit', active: true },
-      { id: 3, name: 'Delete Users', code: 'DELETE_USER', url: '/users/delete', active: false },
-      { id: 4, name: 'Create Permission', code: 'CREATE_PERMISSION', url: '/permissions/create', active: true },
-      { id: 5, name: 'Delete Permission', code: 'DELETE_PERMISSION', url: '/permissions/delete', active: false }
-    ];
-    this.filterPermissions();
-    this.calculateTotalPages();
+    this.loadPermissions();
   }
 
-  filterPermissions(): void {
-    if (!this.searchTerm) {
-      this.filteredPermissions = [...this.permissions];
-    } else {
-      const searchLower = this.searchTerm.toLowerCase();
-      this.filteredPermissions = this.permissions.filter(permission => 
-        permission.name.toLowerCase().includes(searchLower) || 
-        permission.code.toLowerCase().includes(searchLower) ||
-        permission.url.toLowerCase().includes(searchLower)
-      );
-    }
-    this.currentPage = 1;
-    this.calculateTotalPages();
+  loadPermissions(): void {
+    this.isLoading = true;
+    this.apiService.getPermissions(
+      this.currentPage,
+      this.pageSize,
+      this.searchTerm,
+      this.getSortByField(),
+      this.sortDirection
+    ).subscribe({
+      next: (response: ApiResponse<Permission[]>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.permissions = response.data || [];
+          this.totalItems = response.pagination?.total || 0;
+          this.totalPages = response.pagination?.totalPages || 0;
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error loading permissions:', error);
+      }
+    });
   }
 
   onSearch(): void {
-    this.filterPermissions();
-  }
-
-  calculateTotalPages(): void {
-    this.totalPages = Math.ceil(this.filteredPermissions.length / this.pageSize);
+    this.currentPage = 1;
+    this.loadPermissions();
   }
 
   onPageSizeChange(): void {
     this.currentPage = 1;
-    this.calculateTotalPages();
+    this.loadPermissions();
   }
 
   get paginatedPermissions(): Permission[] {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    return this.filteredPermissions.slice(startIndex, startIndex + this.pageSize);
+    return this.permissions;
   }
 
   get showingStart(): number {
@@ -85,12 +72,11 @@ export class PermissionsComponent implements OnInit {
   }
 
   get showingEnd(): number {
-    return Math.min(this.currentPage * this.pageSize, this.filteredPermissions.length);
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
   }
 
-  // Modal methods
   showAddPermissionModal(): void {
-    this.currentPermission = { id: 0, name: '', code: '', url: '', active: true };
+    this.currentPermission = { id: 0, permissionName: '', permissionCode: '', permissionUrl: '', active: true };
     this.isEditMode = false;
     this.showModal = true;
   }
@@ -104,16 +90,22 @@ export class PermissionsComponent implements OnInit {
   closeModal(): void {
     this.showModal = false;
     this.isEditMode = false;
-    this.currentPermission = { id: 0, name: '', code: '', url: '', active: true };
+    this.currentPermission = { id: 0, permissionName: '', permissionCode: '', permissionUrl: '', active: true };
   }
 
   togglePermissionStatus(permission: Permission): void {
-    permission.active = !permission.active;
-    const status = permission.active ? 'activated' : 'deactivated';
-    console.log(`Permission ${status} successfully!`);
+    this.apiService.togglePermissionStatus(permission.id, !permission.active).subscribe({
+      next: (response: ApiResponse<Permission>) => {
+        if (response.status === 'SUCCESS') {
+          this.loadPermissions();
+        }
+      },
+      error: (error) => {
+        console.error('Error toggling permission status:', error);
+      }
+    });
   }
 
-  // Sorting methods
   sortTable(column: string): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -121,41 +113,37 @@ export class PermissionsComponent implements OnInit {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
-    
-    this.filteredPermissions.sort((a, b) => {
-      let valueA = a[column as keyof Permission];
-      let valueB = b[column as keyof Permission];
-      
-      if (typeof valueA === 'string') {
-        valueA = valueA.toLowerCase();
-        valueB = (valueB as string).toLowerCase();
-      }
-      
-      if (valueA < valueB) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      }
-      if (valueA > valueB) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
+    this.loadPermissions();
   }
 
-  // Pagination methods
+  private getSortByField(): string {
+    const fieldMap: { [key: string]: string } = {
+      'id': 'id',
+      'name': 'permissionName',
+      'code': 'permissionCode',
+      'url': 'permissionUrl',
+      'active': 'active'
+    };
+    return fieldMap[this.sortColumn] || 'permissionName';
+  }
+
   nextPage(): void {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
+      this.loadPermissions();
     }
   }
 
   previousPage(): void {
     if (this.currentPage > 1) {
       this.currentPage--;
+      this.loadPermissions();
     }
   }
 
   goToPage(page: number): void {
     this.currentPage = page;
+    this.loadPermissions();
   }
 
   getVisiblePages(): number[] {
@@ -186,54 +174,44 @@ export class PermissionsComponent implements OnInit {
     return rangeWithDots.filter((v, i, arr) => arr.indexOf(v) === i && v > 0);
   }
 
-  getTotalPages(): number {
-    return Math.ceil(this.filteredPermissions.length / this.pageSize);
-  }
-
   addPermission(): void {
-    if (this.currentPermission.name.trim() && this.currentPermission.code.trim()) {
-      this.isLoading = true;
-      
-      const newId = Math.max(...this.permissions.map(p => p.id)) + 1;
-      const newPermission: Permission = {
-        id: newId,
-        name: this.currentPermission.name.trim(),
-        code: this.currentPermission.code.trim(),
-        url: this.currentPermission.url.trim(),
-        active: this.currentPermission.active
-      };
-      
-      this.permissions.push(newPermission);
-      this.filterPermissions();
-      this.closeModal();
-      this.isLoading = false;
-      
-      console.log('Permission added successfully!');
-    }
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    this.apiService.createPermission(this.currentPermission).subscribe({
+      next: (response: ApiResponse<Permission>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadPermissions();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error creating permission:', error);
+      }
+    });
   }
 
   updatePermission(): void {
-    if (this.currentPermission.name.trim() && this.currentPermission.code.trim()) {
-      this.isLoading = true;
-      
-      const index = this.permissions.findIndex(p => p.id === this.currentPermission.id);
-      if (index !== -1) {
-        this.permissions[index] = {
-          ...this.currentPermission,
-          name: this.currentPermission.name.trim(),
-          code: this.currentPermission.code.trim(),
-          url: this.currentPermission.url.trim()
-        };
-        this.filterPermissions();
-        this.closeModal();
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    this.apiService.updatePermission(this.currentPermission.id, this.currentPermission).subscribe({
+      next: (response: ApiResponse<Permission>) => {
         this.isLoading = false;
-        
-        console.log('Permission updated successfully!');
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadPermissions();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error updating permission:', error);
       }
-    }
+    });
   }
 
-  // TrackBy function for better performance
   trackByPermissionId(index: number, permission: Permission): number {
     return permission.id;
   }
