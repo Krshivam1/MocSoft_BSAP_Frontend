@@ -1,21 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  phone: string;
-  department: string;
-  active: boolean;
-}
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ApiService, User, ApiResponse, Role, State, District, Range } from '../../services/api.service';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })
-export class UsersComponent implements OnInit {
+export class UsersComponent implements OnInit, OnDestroy {
   // Data properties
   users: User[] = [];
   filteredUsers: User[] = [];
@@ -38,100 +30,275 @@ export class UsersComponent implements OnInit {
   // Sorting properties
   sortColumn = '';
   sortDirection: 'asc' | 'desc' = 'asc';
+
+  // Dropdown data
+  roles: Role[] = [];
+  states: State[] = [];
+  districts: District[] = [];
+  ranges: Range[] = [];
+
+  // Debouncing properties
+  private searchSubject = new Subject<string>();
+  private searchSubscription?: Subscription;
   
   // Math reference for template
   Math = Math;
 
+  constructor(private apiService: ApiService) {}
+
   ngOnInit() {
+    this.setupSearchDebouncing();
+    this.loadUsers();
+    this.loadDropdownData();
+  }
+
+  ngOnDestroy() {
+    // Clean up subscription to prevent memory leaks
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Set up debounced search functionality
+   */
+  private setupSearchDebouncing(): void {
+    this.searchSubscription = this.searchSubject
+      .pipe(
+        debounceTime(500), // Wait 500ms after last keystroke
+        distinctUntilChanged() // Only search if value changed
+      )
+      .subscribe((searchTerm: string) => {
+        this.performSearch(searchTerm);
+      });
+  }
+
+  /**
+   * Called when user types in search input
+   */
+  onSearchInput(): void {
+    this.searchSubject.next(this.searchTerm);
+  }
+
+  /**
+   * Perform the actual search
+   */
+  private performSearch(searchTerm: string): void {
+    this.currentPage = 1;
     this.loadUsers();
   }
 
-  private loadUsers() {
-    // TODO: Replace with actual API call
-    this.users = [
-      { id: 1, name: 'John Doe', email: 'john.doe@example.com', role: 'Admin', phone: '9876543210', department: 'IT', active: true },
-      { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Manager', phone: '9876543211', department: 'HR', active: true },
-      { id: 3, name: 'Bob Johnson', email: 'bob.johnson@example.com', role: 'Officer', phone: '9876543212', department: 'Finance', active: false },
-      { id: 4, name: 'Alice Brown', email: 'alice.brown@example.com', role: 'User', phone: '9876543213', department: 'Operations', active: true },
-      { id: 5, name: 'Charlie Wilson', email: 'charlie.wilson@example.com', role: 'Officer', phone: '9876543214', department: 'Security', active: true },
-      { id: 6, name: 'Diana Davis', email: 'diana.davis@example.com', role: 'Manager', phone: '9876543215', department: 'Admin', active: false },
-      { id: 7, name: 'Edward Miller', email: 'edward.miller@example.com', role: 'User', phone: '9876543216', department: 'IT', active: true },
-      { id: 8, name: 'Fiona Garcia', email: 'fiona.garcia@example.com', role: 'Officer', phone: '9876543217', department: 'Legal', active: true }
-    ];
-
-    this.applyFilters();
+  /**
+   * Manual search trigger
+   */
+  onSearch(): void {
+    this.searchSubject.next(this.searchTerm);
   }
+
+  /**
+   * Clear search and reset
+   */
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.currentPage = 1;
+    this.loadUsers();
+  }
+
+  /**
+   * Load users from API
+   */
+  loadUsers(): void {
+    this.isLoading = true;
+    this.apiService.getUsers(
+      this.currentPage,
+      this.itemsPerPage,
+      this.searchTerm,
+      this.getSortByField(),
+      this.sortDirection
+    ).subscribe({
+      next: (response: ApiResponse<User[]>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.users = response.data || [];
+          this.totalItems = response.pagination?.total || 0;
+          this.totalPages = response.pagination?.totalPages || 0;
+          this.updateFilteredData();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error loading users:', error);
+        // Handle error - show message to user
+      }
+    });
+  }
+
+  /**
+   * Load dropdown data for forms
+   */
+  loadDropdownData(): void {
+    // Load roles
+    this.apiService.getActiveRoles().subscribe({
+      next: (response: ApiResponse<Role[]>) => {
+        if (response.status === 'SUCCESS') {
+          this.roles = response.data || [];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading roles:', error);
+      }
+    });
+
+    // Load states
+    this.apiService.getActiveStates().subscribe({
+      next: (response: ApiResponse<State[]>) => {
+        if (response.status === 'SUCCESS') {
+          this.states = response.data || [];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading states:', error);
+      }
+    });
+
+    // Uncomment and implement if needed:
+    // // Load ranges
+    // this.apiService.getRanges().subscribe({
+    //   next: (response: ApiResponse<Range[]>) => {
+    //     if (response.status === 'SUCCESS') {
+    //       this.ranges = response.data || [];
+    //     }
+    //   },
+    //   error: (error) => {
+    //     console.error('Error loading ranges:', error);
+    //   }
+    // });
+
+  }
+
+  // /**
+  //  * Load districts based on selected range
+  //  */
+  // loadDistricts(rangeId?: number): void {
+  //   if (rangeId) {
+  //     this.apiService.getDistricts(1, 100, '', '', '', undefined, rangeId).subscribe({
+  //       next: (response: ApiResponse<District[]>) => {
+  //         if (response.status === 'SUCCESS') {
+  //           this.districts = response.data || [];
+  //         }
+  //       },
+  //       error: (error) => {
+  //         console.error('Error loading districts:', error);
+  //       }
+  //     });
+  //   } else {
+  //     this.districts = [];
+  //   }
+  // }
 
   private createEmptyUser(): User {
     return {
       id: 0,
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
-      role: '',
-      phone: '',
-      department: '',
+      mobileNo: '',
+      contactNo: '',
+      userImage: '',
+      stateId: undefined,
+      rangeId: undefined,
+      districtId: undefined,
+      roleId: 0,
+      password: '',
+      verified: false,
+      isFirst: true,
+      joiningDate: '',
+      endDate: '',
+      numberSubdivision: 0,
+      numberCircle: 0,
+      numberPs: 0,
+      numberOp: 0,
       active: true
     };
   }
 
   // Search and filter methods
-  onSearch(): void {
-    this.applyFilters();
-  }
-
   onPageSizeChange(): void {
     this.itemsPerPage = this.pageSize;
     this.currentPage = 1;
-    this.updatePaginatedData();
+    this.loadUsers();
   }
 
-  applyFilters(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredUsers = [...this.users];
-    } else {
-      const term = this.searchTerm.toLowerCase().trim();
-      this.filteredUsers = this.users.filter(user =>
-        user.name.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term) ||
-        user.role.toLowerCase().includes(term) ||
-        user.department.toLowerCase().includes(term) ||
-        user.phone.includes(term)
-      );
-    }
-    this.currentPage = 1;
+  private updateFilteredData(): void {
+    this.filteredUsers = [...this.users];
     this.updatePaginatedData();
   }
 
   // Pagination methods
-  updatePaginatedData(): void {
-    this.totalItems = this.filteredUsers.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = Math.min(startIndex + this.itemsPerPage, this.totalItems);
-    this.paginatedUsers = this.filteredUsers.slice(startIndex, endIndex);
+  private updatePaginatedData(): void {
+    this.paginatedUsers = [...this.users]; // Already paginated from API
   }
 
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
-      this.updatePaginatedData();
+      this.loadUsers();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadUsers();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadUsers();
     }
   }
 
   getVisiblePages(): number[] {
-    const pages: number[] = [];
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
+    const visiblePages: number[] = [];
+    const maxVisiblePages = 5;
     
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    if (this.totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= this.totalPages; i++) {
+        visiblePages.push(i);
+      }
+    } else {
+      const halfVisible = Math.floor(maxVisiblePages / 2);
+      let startPage = Math.max(1, this.currentPage - halfVisible);
+      let endPage = Math.min(this.totalPages, this.currentPage + halfVisible);
+      
+      if (this.currentPage <= halfVisible) {
+        endPage = maxVisiblePages;
+      } else if (this.currentPage > this.totalPages - halfVisible) {
+        startPage = this.totalPages - maxVisiblePages + 1;
+      }
+      
+      if (startPage > 1) {
+        visiblePages.push(1);
+        if (startPage > 2) {
+          visiblePages.push(-1); // Ellipsis
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        visiblePages.push(i);
+      }
+      
+      if (endPage < this.totalPages) {
+        if (endPage < this.totalPages - 1) {
+          visiblePages.push(-1); // Ellipsis
+        }
+        visiblePages.push(this.totalPages);
+      }
     }
     
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
+    return visiblePages;
   }
 
   // Sorting functionality
@@ -143,29 +310,22 @@ export class UsersComponent implements OnInit {
       this.sortDirection = 'asc';
     }
 
-    this.filteredUsers.sort((a, b) => {
-      let aValue = a[column as keyof User];
-      let bValue = b[column as keyof User];
+    // Reload from API with new sorting
+    this.loadUsers();
+  }
 
-      // Provide default values if undefined
-      if (aValue === undefined || aValue === null) aValue = '';
-      if (bValue === undefined || bValue === null) bValue = '';
-
-      // Handle different data types
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = (bValue as string).toLowerCase();
-      }
-
-      if (aValue < bValue) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      } else if (aValue > bValue) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    this.updatePaginatedData();
+  private getSortByField(): string {
+    // Map UI column names to API field names
+    const fieldMap: { [key: string]: string } = {
+      'id': 'id',
+      'name': 'firstName',
+      'email': 'email',
+      'role': 'roleId',
+      'phone': 'mobileNo',
+      'department': 'districtId',
+      'active': 'active'
+    };
+    return fieldMap[this.sortColumn] || 'firstName';
   }
 
   // Modal functionality
@@ -179,54 +339,126 @@ export class UsersComponent implements OnInit {
     this.showModal = false;
     this.currentUser = this.createEmptyUser();
     this.isEditMode = false;
+    this.districts = []; // Reset districts
   }
 
   editUser(user: User): void {
     this.isEditMode = true;
     this.currentUser = { ...user };
+    
+    // Load districts if range is selected
+    // if (this.currentUser.rangeId) {
+    //   this.loadDistricts(this.currentUser.rangeId);
+    // }
+    
     this.showModal = true;
   }
 
   toggleUserStatus(user: User): void {
-    const index = this.users.findIndex(u => u.id === user.id);
-    if (index !== -1) {
-      this.users[index].active = !this.users[index].active;
-      this.applyFilters();
-      // TODO: Implement actual API call
-      console.log('User status toggled:', this.users[index]);
-    }
+    this.apiService.toggleUserStatus(user.id, !user.active).subscribe({
+      next: (response: ApiResponse<User>) => {
+        if (response.status === 'SUCCESS') {
+          // Update local data
+          const index = this.users.findIndex(u => u.id === user.id);
+          if (index !== -1) {
+            this.users[index].active = !user.active;
+          }
+          this.updateFilteredData();
+        }
+      },
+      error: (error) => {
+        console.error('Error toggling user status:', error);
+        // Handle error - show message to user
+      }
+    });
+  }
+
+  // Handle range selection change
+  onRangeChange(rangeId?: number): void {
+    this.currentUser.rangeId = rangeId;
+    this.currentUser.districtId = undefined; // Reset district when range changes
+    // this.loadDistricts(rangeId);
   }
 
   addUser(): void {
+    if (this.isLoading) return;
+    
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const newId = this.getNextId();
-      this.currentUser.id = newId;
-      this.currentUser.active = this.currentUser.active || false;
-      this.users.unshift({ ...this.currentUser });
-      this.applyFilters();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
+    this.apiService.createUser(this.currentUser).subscribe({
+      next: (response: ApiResponse<User>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadUsers(); // Reload to get the latest data
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error creating user:', error);
+        // Handle error - show message to user
+      }
+    });
   }
 
   updateUser(): void {
+    if (this.isLoading) return;
+    
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const index = this.users.findIndex(u => u.id === this.currentUser.id);
-      if (index !== -1) {
-        this.users[index] = { ...this.currentUser };
+    this.apiService.updateUser(this.currentUser.id, this.currentUser).subscribe({
+      next: (response: ApiResponse<User>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadUsers(); // Reload to get the latest data
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error updating user:', error);
+        // Handle error - show message to user
       }
-      this.applyFilters();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
+    });
   }
 
-  private getNextId(): number {
-    return this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1;
+  // Helper properties for template
+  get showingStart(): number {
+    return (this.currentPage - 1) * this.itemsPerPage + 1;
+  }
+
+  get showingEnd(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.totalItems);
+  }
+
+  // Get full name for display
+  getFullName(user: User): string {
+    return `${user.firstName} ${user.lastName}`.trim();
+  }
+
+  // Get role name for display
+  getRoleName(roleId: number): string {
+    const role = this.roles.find(r => r.id === roleId);
+    return role ? role.roleName : 'Unknown';
+  }
+
+  // Get state name for display
+  getStateName(stateId?: number): string {
+    if (!stateId) return '-';
+    const state = this.states.find(s => s.id === stateId);
+    return state ? state.stateName : 'Unknown';
+  }
+
+  // Get district name for display
+  getDistrictName(districtId?: number): string {
+    if (!districtId) return '-';
+    const district = this.districts.find(d => d.id === districtId);
+    return district ? district.districtName : 'Unknown';
+  }
+
+  // Get range name for display
+  getRangeName(rangeId?: number): string {
+    if (!rangeId) return '-';
+    const range = this.ranges.find(r => r.id === rangeId);
+    return range ? range.rangeName : 'Unknown';
   }
 
   // TrackBy function for performance

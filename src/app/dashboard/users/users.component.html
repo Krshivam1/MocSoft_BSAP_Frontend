@@ -28,14 +28,22 @@
         type="text" 
         id="search"
         [(ngModel)]="searchTerm" 
-        (input)="onSearch()" 
+        (input)="onSearchInput()" 
+        (keyup.enter)="onSearch()"
         placeholder="Search users..."
       />
+      <button (click)="clearSearch()" class="clear-search-btn">Clear</button>
     </div>
   </div>
 
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
   <!-- Table -->
-  <div class="table-container">
+  <div *ngIf="!isLoading" class="table-container">
     <table class="data-table">
       <thead>
         <tr>
@@ -69,12 +77,9 @@
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th (click)="sortTable('department')" class="sortable">
-            Department
-            <span class="sort-icon" [class.active]="sortColumn === 'department'">
-              {{ sortDirection === 'asc' ? '↑' : '↓' }}
-            </span>
-          </th>
+          <th>State</th>
+          <th>Range</th>
+          <th>District</th>
           <th (click)="sortTable('active')" class="sortable">
             Active
             <span class="sort-icon" [class.active]="sortColumn === 'active'">
@@ -87,13 +92,15 @@
       <tbody>
         <tr *ngFor="let user of paginatedUsers; trackBy: trackByUserId">
           <td>{{ user.id }}</td>
-          <td>{{ user.name }}</td>
+          <td>{{ getFullName(user) }}</td>
           <td>{{ user.email }}</td>
           <td>
-            <span class="role-badge">{{ user.role }}</span>
+            <span class="role-badge">{{ getRoleName(user.roleId) }}</span>
           </td>
-          <td>{{ user.phone }}</td>
-          <td>{{ user.department }}</td>
+          <td>{{ user.mobileNo }}</td>
+          <td>{{ getStateName(user.stateId) }}</td>
+          <td>{{ getRangeName(user.rangeId) }}</td>
+          <td>{{ getDistrictName(user.districtId) }}</td>
           <td>
             <span class="status-badge" [class.active]="user.active" [class.inactive]="!user.active">
               {{ user.active ? 'YES' : 'NO' }}
@@ -113,24 +120,23 @@
           </td>
         </tr>
         <tr *ngIf="paginatedUsers.length === 0">
-          <td colspan="8" class="no-data">No users found</td>
+          <td colspan="10" class="no-data">No users found</td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <!-- Pagination -->
-  <div class="pagination-container">
+  <div *ngIf="!isLoading && users.length > 0" class="pagination-container">
     <div class="pagination-info">
-      Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
-      {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} entries
+      Showing {{ showingStart }} to {{ showingEnd }} of {{ totalItems }} entries
     </div>
     
     <div class="pagination">
       <button 
         class="page-btn" 
         [disabled]="currentPage === 1" 
-        (click)="goToPage(currentPage - 1)"
+        (click)="previousPage()"
       >
         Previous
       </button>
@@ -140,14 +146,15 @@
         class="page-btn" 
         [class.active]="page === currentPage"
         (click)="goToPage(page)"
+        [class.ellipsis]="page === -1"
       >
-        {{ page }}
+        {{ page === -1 ? '...' : page }}
       </button>
       
       <button 
         class="page-btn" 
         [disabled]="currentPage === totalPages" 
-        (click)="goToPage(currentPage + 1)"
+        (click)="nextPage()"
       >
         Next
       </button>
@@ -155,7 +162,6 @@
   </div>
 </div>
 
-<!-- User Modal -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
   <div class="modal-dialog" (click)="$event.stopPropagation()">
     <div class="modal-content">
@@ -168,87 +174,170 @@
       
       <div class="modal-body">
         <form (ngSubmit)="isEditMode ? updateUser() : addUser()" #userForm="ngForm">
-      <div class="form-group">
-        <label for="userName" class="required">Name</label>
-        <input 
-          type="text" 
-          id="userName" 
-          name="userName" 
-          [(ngModel)]="currentUser.name" 
-          #userName="ngModel"
-          required 
-          class="form-control"
-          [class.error]="userName.touched && userName.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="userName.touched && userName.errors?.['required']">
-          Name is required
-        </div>
-      </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName" class="required">First Name</label>
+              <input 
+                type="text" 
+                id="firstName" 
+                name="firstName" 
+                [(ngModel)]="currentUser.firstName" 
+                #firstName="ngModel"
+                required 
+                class="form-control"
+                [class.error]="firstName.touched && firstName.errors?.['required']"
+              />
+              <div class="error-message" *ngIf="firstName.touched && firstName.errors?.['required']">
+                First name is required
+              </div>
+            </div>
 
-      <div class="form-group">
-        <label for="userEmail" class="required">Email</label>
-        <input 
-          type="email" 
-          id="userEmail" 
-          name="userEmail" 
-          [(ngModel)]="currentUser.email" 
-          #userEmail="ngModel"
-          required 
-          email
-          class="form-control"
-          [class.error]="userEmail.touched && (userEmail.errors?.['required'] || userEmail.errors?.['email'])"
-        />
-        <div class="error-message" *ngIf="userEmail.touched && userEmail.errors?.['required']">
-          Email is required
-        </div>
-        <div class="error-message" *ngIf="userEmail.touched && userEmail.errors?.['email']">
-          Please enter a valid email address
-        </div>
-      </div>
+            <div class="form-group">
+              <label for="lastName" class="required">Last Name</label>
+              <input 
+                type="text" 
+                id="lastName" 
+                name="lastName" 
+                [(ngModel)]="currentUser.lastName" 
+                #lastName="ngModel"
+                required 
+                class="form-control"
+                [class.error]="lastName.touched && lastName.errors?.['required']"
+              />
+              <div class="error-message" *ngIf="lastName.touched && lastName.errors?.['required']">
+                Last name is required
+              </div>
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="userRole" class="required">Role</label>
-        <select 
-          id="userRole" 
-          name="userRole" 
-          [(ngModel)]="currentUser.role" 
-          #userRole="ngModel"
-          required 
-          class="form-control"
-          [class.error]="userRole.touched && userRole.errors?.['required']"
-        >
-          <option value="">Select Role</option>
-          <option value="Admin">Admin</option>
-          <option value="Manager">Manager</option>
-          <option value="Officer">Officer</option>
-          <option value="User">User</option>
-        </select>
-        <div class="error-message" *ngIf="userRole.touched && userRole.errors?.['required']">
-          Role is required
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="userEmail" class="required">Email</label>
+            <input 
+              type="email" 
+              id="userEmail" 
+              name="userEmail" 
+              [(ngModel)]="currentUser.email" 
+              #userEmail="ngModel"
+              required 
+              email
+              class="form-control"
+              [class.error]="userEmail.touched && (userEmail.errors?.['required'] || userEmail.errors?.['email'])"
+            />
+            <div class="error-message" *ngIf="userEmail.touched && userEmail.errors?.['required']">
+              Email is required
+            </div>
+            <div class="error-message" *ngIf="userEmail.touched && userEmail.errors?.['email']">
+              Please enter a valid email address
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="userPhone">Phone</label>
-        <input 
-          type="tel" 
-          id="userPhone" 
-          name="userPhone" 
-          [(ngModel)]="currentUser.phone" 
-          class="form-control"
-        />
-      </div>
+          <div class="form-group">
+            <label for="mobileNo" class="required">Mobile Number</label>
+            <input 
+              type="tel" 
+              id="mobileNo" 
+              name="mobileNo" 
+              [(ngModel)]="currentUser.mobileNo" 
+              #mobileNo="ngModel"
+              required 
+              class="form-control"
+              [class.error]="mobileNo.touched && mobileNo.errors?.['required']"
+            />
+            <div class="error-message" *ngIf="mobileNo.touched && mobileNo.errors?.['required']">
+              Mobile number is required
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="userDepartment">Department</label>
-        <input 
-          type="text" 
-          id="userDepartment" 
-          name="userDepartment" 
-          [(ngModel)]="currentUser.department" 
-          class="form-control"
-        />
-      </div>
+          <div class="form-group">
+            <label for="contactNo">Contact Number</label>
+            <input 
+              type="tel" 
+              id="contactNo" 
+              name="contactNo" 
+              [(ngModel)]="currentUser.contactNo" 
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="userRole" class="required">Role</label>
+            <select 
+              id="userRole" 
+              name="userRole" 
+              [(ngModel)]="currentUser.roleId" 
+              #userRole="ngModel"
+              required 
+              class="form-control"
+              [class.error]="userRole.touched && userRole.errors?.['required']"
+            >
+              <option value="">Select Role</option>
+              <option *ngFor="let role of roles" [value]="role.id">{{ role.roleName }}</option>
+            </select>
+            <div class="error-message" *ngIf="userRole.touched && userRole.errors?.['required']">
+              Role is required
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="state">State</label>
+              <select 
+                id="state" 
+                name="state" 
+                [(ngModel)]="currentUser.stateId" 
+                class="form-control"
+              >
+                <option value="">Select State</option>
+                <option *ngFor="let state of states" [value]="state.id">{{ state.stateName }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="range">Range</label>
+              <select 
+                id="range" 
+                name="range" 
+                [(ngModel)]="currentUser.rangeId" 
+                (change)="onRangeChange(currentUser.rangeId)"
+                class="form-control"
+              >
+                <option value="">Select Range</option>
+                <option *ngFor="let range of ranges" [value]="range.id">{{ range.rangeName }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="district">District</label>
+            <select 
+              id="district" 
+              name="district" 
+              [(ngModel)]="currentUser.districtId" 
+              class="form-control"
+              [disabled]="!currentUser.rangeId"
+            >
+              <option value="">Select District</option>
+              <option *ngFor="let district of districts" [value]="district.id">{{ district.districtName }}</option>
+            </select>
+            <div class="help-text" *ngIf="!currentUser.rangeId">Please select a range first</div>
+          </div>
+
+          <div *ngIf="!isEditMode" class="form-group">
+            <label for="password" class="required">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              [(ngModel)]="currentUser.password" 
+              #password="ngModel"
+              [required]="!isEditMode"
+              class="form-control"
+              [class.error]="password.touched && password.errors?.['required']"
+            />
+            <div class="error-message" *ngIf="password.touched && password.errors?.['required']">
+              Password is required
+            </div>
+          </div>
 
           <div class="form-group">
             <div class="checkbox-group">
