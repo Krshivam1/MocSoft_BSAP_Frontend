@@ -1,90 +1,129 @@
-import { Component, OnInit } from '@angular/core';
-
-interface State {
-  id: number;
-  name: string;
-  description: string;
-  active: boolean;
-}
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ApiService, State, ApiResponse } from '../../services/api.service';
 
 @Component({
   selector: 'app-state-management',
   templateUrl: './state.component.html',
   styleUrls: ['./state.component.css'],
 })
-export class StateComponent implements OnInit {
-  states: State[] = [
-    { id: 1, name: 'Bihar', description: 'Bihar State', active: true },
-    { id: 2, name: 'Maharashtra', description: 'Maharashtra State', active: true },
-    { id: 3, name: 'Tamil Nadu', description: 'Tamil Nadu State', active: false },
-    { id: 4, name: 'Karnataka', description: 'Karnataka State', active: true },
-    { id: 5, name: 'Gujarat', description: 'Gujarat State', active: true },
-    { id: 6, name: 'Rajasthan', description: 'Rajasthan State', active: false },
-    { id: 7, name: 'West Bengal', description: 'West Bengal State', active: true },
-    { id: 8, name: 'West Bengal 2', description: 'Test State', active: true }
-  ];
-
+export class StateComponent implements OnInit, OnDestroy {
+  states: State[] = [];
   filteredStates: State[] = [];
   searchText: string = '';
   currentPage: number = 1;
   entriesPerPage: number = 10;
   totalPages: number = 1;
+  totalItems: number = 0;
 
   // Modal and form states
   showModal = false;
   isEditMode = false;
   isLoading = false;
-  currentState: State = { id: 0, name: '', description: '', active: true };
+  currentState: State = { id: 0, stateName: '', stateDescription: '', active: true };
   
   // Sorting
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor() {}
+  // Debouncing properties
+  private searchSubject = new Subject<string>();
+  private searchSubscription?: Subscription;
+
+  constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
-    this.filterStates();
-    this.calculateTotalPages();
+    this.setupSearchDebouncing();
+    this.loadStates();
   }
 
-  filterStates(): void {
-    if (!this.searchText) {
-      this.filteredStates = [...this.states];
-    } else {
-      const searchLower = this.searchText.toLowerCase();
-      this.filteredStates = this.states.filter(state => 
-        state.name.toLowerCase().includes(searchLower) || 
-        state.description.toLowerCase().includes(searchLower)
-      );
+  ngOnDestroy() {
+    // Clean up subscription to prevent memory leaks
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
     }
-    this.currentPage = 1;
-    this.calculateTotalPages();
   }
 
-  calculateTotalPages(): void {
-    this.totalPages = Math.ceil(this.filteredStates.length / this.entriesPerPage);
+  /**
+   * Set up debounced search functionality
+   * Waits 500ms after user stops typing before searching
+   */
+  private setupSearchDebouncing(): void {
+    this.searchSubscription = this.searchSubject
+      .pipe(
+        debounceTime(500), // Wait 500ms after last keystroke
+        distinctUntilChanged() // Only search if value changed
+      )
+      .subscribe((searchText: string) => {
+        this.performSearch(searchText);
+      });
+  }
+
+  /**
+   * Called when user types in search input
+   */
+  onSearchInput(): void {
+    // Push the search term to the subject for debouncing
+    this.searchSubject.next(this.searchText);
+  }
+
+  /**
+   * Perform the actual search
+   */
+  private performSearch(searchText: string): void {
+    this.currentPage = 1;
+    this.loadStates();
+  }
+
+  /**
+   * Manual search trigger (e.g., from search button)
+   */
+  onSearch(): void {
+    // Cancel any pending debounced search
+    this.searchSubject.next(this.searchText);
+  }
+
+  /**
+   * Clear search and reset
+   */
+  clearSearch(): void {
+    this.searchText = '';
+    this.currentPage = 1;
+    this.loadStates();
+  }
+
+  loadStates(): void {
+    this.isLoading = true;
+    this.apiService.getStates(
+      this.currentPage,
+      this.entriesPerPage,
+      this.searchText,
+      this.getSortByField(),
+      this.sortDirection
+    ).subscribe({
+      next: (response: ApiResponse<State[]>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.states = response.data || [];
+          this.filteredStates = [...this.states];
+          this.totalItems = response.pagination?.total || 0;
+          this.totalPages = response.pagination?.totalPages || 0;
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error loading states:', error);
+      }
+    });
   }
 
   onEntriesPerPageChange(): void {
     this.currentPage = 1;
-    this.calculateTotalPages();
-  }
-
-  nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-    }
-  }
-
-  previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-    }
+    this.loadStates();
   }
 
   get paginatedStates(): State[] {
-    const startIndex = (this.currentPage - 1) * this.entriesPerPage;
-    return this.filteredStates.slice(startIndex, startIndex + this.entriesPerPage);
+    return this.filteredStates;
   }
 
   get showingStart(): number {
@@ -92,12 +131,12 @@ export class StateComponent implements OnInit {
   }
 
   get showingEnd(): number {
-    return Math.min(this.currentPage * this.entriesPerPage, this.filteredStates.length);
+    return Math.min(this.currentPage * this.entriesPerPage, this.totalItems);
   }
 
   // Modal methods
   showAddStateModal(): void {
-    this.currentState = { id: 0, name: '', description: '', active: true };
+    this.currentState = { id: 0, stateName: '', stateDescription: '', active: true };
     this.isEditMode = false;
     this.showModal = true;
   }
@@ -111,65 +150,72 @@ export class StateComponent implements OnInit {
   closeModal(): void {
     this.showModal = false;
     this.isEditMode = false;
-    this.currentState = { id: 0, name: '', description: '', active: true };
+    this.currentState = { id: 0, stateName: '', stateDescription: '', active: true };
   }
 
   addState(): void {
-    if (this.currentState.name.trim() && this.currentState.description.trim()) {
-      this.isLoading = true;
-      
-      const newId = Math.max(...this.states.map(s => s.id)) + 1;
-      const newState: State = {
-        id: newId,
-        name: this.currentState.name.trim(),
-        description: this.currentState.description.trim(),
-        active: this.currentState.active
-      };
-      
-      this.states.push(newState);
-      this.filterStates();
-      this.closeModal();
-      this.isLoading = false;
-      
-      console.log('State added successfully!');
-    }
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    this.apiService.createState(this.currentState).subscribe({
+      next: (response: ApiResponse<State>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadStates();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error creating state:', error);
+      }
+    });
   }
 
   updateState(): void {
-    if (this.currentState.name.trim() && this.currentState.description.trim()) {
-      this.isLoading = true;
-      
-      const index = this.states.findIndex(s => s.id === this.currentState.id);
-      if (index !== -1) {
-        this.states[index] = {
-          ...this.currentState,
-          name: this.currentState.name.trim(),
-          description: this.currentState.description.trim()
-        };
-        this.filterStates();
-        this.closeModal();
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    this.apiService.updateState(this.currentState.id, this.currentState).subscribe({
+      next: (response: ApiResponse<State>) => {
         this.isLoading = false;
-        
-        console.log('State updated successfully!');
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadStates();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error updating state:', error);
       }
-    }
+    });
   }
 
   toggleStateStatus(state: State): void {
-    state.active = !state.active;
-    const status = state.active ? 'activated' : 'deactivated';
-    
-    // In a real application, you would show a toast notification
-    console.log(`State ${status} successfully!`);
+    this.apiService.toggleStateStatus(state.id, !state.active).subscribe({
+      next: (response: ApiResponse<State>) => {
+        if (response.status === 'SUCCESS') {
+          this.loadStates();
+        }
+      },
+      error: (error) => {
+        console.error('Error toggling state status:', error);
+      }
+    });
   }
 
   deleteState(state: State): void {
-    if (confirm(`Are you sure you want to delete ${state.name}?`)) {
-      this.states = this.states.filter(s => s.id !== state.id);
-      this.filterStates();
-      
-      // In a real application, you would show a toast notification
-      console.log('State deleted successfully!');
+    if (confirm(`Are you sure you want to delete ${state.stateName}?`)) {
+      this.apiService.deleteState(state.id).subscribe({
+        next: (response: ApiResponse<any>) => {
+          if (response.status === 'SUCCESS') {
+            this.loadStates();
+          }
+        },
+        error: (error) => {
+          console.error('Error deleting state:', error);
+        }
+      });
     }
   }
 
@@ -181,29 +227,37 @@ export class StateComponent implements OnInit {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
-    
-    this.filteredStates.sort((a, b) => {
-      let valueA = a[column as keyof State];
-      let valueB = b[column as keyof State];
-      
-      if (typeof valueA === 'string') {
-        valueA = valueA.toLowerCase();
-        valueB = (valueB as string).toLowerCase();
-      }
-      
-      if (valueA < valueB) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      }
-      if (valueA > valueB) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
+    this.loadStates();
+  }
+
+  private getSortByField(): string {
+    const fieldMap: { [key: string]: string } = {
+      'id': 'id',
+      'name': 'stateName',
+      'description': 'stateDescription',
+      'active': 'active'
+    };
+    return fieldMap[this.sortColumn] || 'stateName';
   }
 
   // Pagination methods
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadStates();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadStates();
+    }
+  }
+
   goToPage(page: number): void {
     this.currentPage = page;
+    this.loadStates();
   }
 
   getVisiblePages(): number[] {
@@ -235,7 +289,7 @@ export class StateComponent implements OnInit {
   }
 
   getTotalPages(): number {
-    return Math.ceil(this.filteredStates.length / this.entriesPerPage);
+    return this.totalPages;
   }
 
   // TrackBy function for better performance

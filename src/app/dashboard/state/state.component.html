@@ -28,14 +28,24 @@
         type="text" 
         id="search"
         [(ngModel)]="searchText" 
-        (input)="filterStates()" 
+        (input)="onSearchInput()" 
         placeholder="Search states..."
       />
+      <!-- Loading indicator during search -->
+      <div *ngIf="isLoading" class="search-loading">
+        <div class="spinner-small"></div>
+      </div>
     </div>
   </div>
 
+  <!-- Loading State -->
+  <div *ngIf="isLoading && states.length === 0" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading states...</p>
+  </div>
+
   <!-- Table -->
-  <div class="table-container">
+  <div class="table-container" *ngIf="!isLoading || states.length > 0">
     <table class="data-table">
       <thead>
         <tr>
@@ -63,14 +73,14 @@
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th>Edit</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let state of paginatedStates; trackBy: trackByStateId">
           <td>{{ state.id }}</td>
-          <td>{{ state.name }}</td>
-          <td>{{ state.description }}</td>
+          <td>{{ state.stateName }}</td>
+          <td>{{ state.stateDescription || 'No description' }}</td>
           <td>
             <span class="status-badge" [class.active]="state.active" [class.inactive]="!state.active">
               {{ state.active ? 'YES' : 'NO' }}
@@ -86,7 +96,18 @@
               >
                 {{ state.active ? 'Deactivate' : 'Activate' }}
               </button>
+              <!-- <button 
+                class="delete-btn" 
+                (click)="deleteState(state)"
+              >
+                Delete
+              </button> -->
             </div>
+          </td>
+        </tr>
+        <tr *ngIf="states.length === 0 && !isLoading">
+          <td colspan="5" class="no-data">
+            No states found
           </td>
         </tr>
       </tbody>
@@ -94,9 +115,9 @@
   </div>
 
   <!-- Pagination -->
-  <div class="pagination-container">
+  <div class="pagination-container" *ngIf="states.length > 0">
     <div class="pagination-info">
-      Showing {{ showingStart }} to {{ showingEnd }} of {{ filteredStates.length }} entries
+      Showing {{ showingStart }} to {{ showingEnd }} of {{ totalItems }} entries
     </div>
     
     <div class="pagination">
@@ -113,13 +134,14 @@
         class="page-btn" 
         [class.active]="page === currentPage"
         (click)="goToPage(page)"
+        [disabled]="page === -1"
       >
-        {{ page }}
+        {{ page === -1 ? '...' : page }}
       </button>
       
       <button 
         class="page-btn" 
-        [disabled]="currentPage === getTotalPages()" 
+        [disabled]="currentPage === totalPages" 
         (click)="nextPage()"
       >
         Next
@@ -147,7 +169,7 @@
               type="text" 
               id="stateName" 
               name="stateName" 
-              [(ngModel)]="currentState.name" 
+              [(ngModel)]="currentState.stateName" 
               #stateName="ngModel"
               required 
               class="form-control"
@@ -159,20 +181,16 @@
           </div>
 
           <div class="form-group">
-            <label for="stateDescription">Description <span class="required">*</span></label>
+            <label for="stateDescription">Description</label>
             <textarea 
               id="stateDescription" 
               name="stateDescription" 
-              [(ngModel)]="currentState.description" 
+              [(ngModel)]="currentState.stateDescription" 
               #stateDescription="ngModel"
-              required 
               rows="3"
               class="form-control"
               placeholder="Enter state description"
             ></textarea>
-            <div class="error-message" *ngIf="stateDescription.invalid && stateDescription.touched">
-              State description is required
-            </div>
           </div>
 
           <div class="form-group">
@@ -206,4 +224,3 @@
     </div>
   </div>
 </div>
-

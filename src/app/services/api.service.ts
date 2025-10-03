@@ -53,6 +53,18 @@ export interface SubMenu {
   updatedAt?: string;
 }
 
+
+export interface State {
+  id: number;
+  stateName: string;
+  stateDescription?: string;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ApiResponse<T> {
   status: 'SUCCESS' | 'ERROR';
   message: string;
@@ -112,6 +124,68 @@ export interface SubTopic {
   topicName?: string;
 }
 
+
+export interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobileNo: string;
+  contactNo?: string;
+  userImage?: string;
+  stateId?: number;
+  rangeId?: number;
+  districtId?: number;
+  roleId: number;
+  password: string;
+  token?: string;
+  tokenValidity?: string;
+  verified: boolean;
+  otp?: string;
+  otpValidity?: string;
+  isFirst: boolean;
+  joiningDate?: string;
+  endDate?: string;
+  numberSubdivision?: number;
+  numberCircle?: number;
+  numberPs?: number;
+  numberOp?: number;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // Association fields (optional, populated when included)
+  state?: State;
+  role?: Role;
+  district?: District;
+  range?: Range;
+}
+
+export interface Range {
+  id: number;
+  rangeName: string;
+  stateId?: number;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface District {
+  id: number;
+  districtName: string;
+  rangeId?: number;
+  stateId?: number;
+  active: boolean;
+  createdBy?: number;
+  updatedBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Question {
   id: number;
   topicId: number;
@@ -137,7 +211,6 @@ export interface Question {
   maxScore?: number;
   displayOrder?: number;
   isActive?: boolean;
-  // Relationship properties (populated when included in API response)
   topic?: {
     id: number;
     topicName: string;
@@ -1204,6 +1277,331 @@ searchRoles(searchTerm: string, page: number = 1, limit: number = 10): Observabl
       { headers: this.getHeaders('application/json') }
     );
   }
+
+  // State Operations
+  getStates(
+    page: number = 1, 
+    limit: number = 10, 
+    search?: string, 
+    sortBy: string = 'stateName', 
+    sortOrder: string = 'ASC',
+    status?: string
+  ): Observable<ApiResponse<State[]>> {
+    let params = `?page=${page}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    
+    if (search && search.trim()) {
+      params += `&search=${encodeURIComponent(search)}`;
+    }
+    if (status) {
+      params += `&status=${status}`;
+    }
+    
+    return this.http.get<ApiResponse<State[]>>(
+      `${this.baseUrl}states${params}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getStateById(id: number): Observable<ApiResponse<State>> {
+    return this.http.get<ApiResponse<State>>(
+      `${this.baseUrl}states/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  createState(data: Partial<State>): Observable<ApiResponse<State>> {
+    return this.http.post<ApiResponse<State>>(
+      `${this.baseUrl}states`,
+      data,
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  updateState(id: number, data: Partial<State>): Observable<ApiResponse<State>> {
+    return this.http.put<ApiResponse<State>>(
+      `${this.baseUrl}states/${id}`,
+      data,
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  deleteState(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.baseUrl}states/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  activateState(id: number): Observable<ApiResponse<State>> {
+    return this.http.post<ApiResponse<State>>(
+      `${this.baseUrl}states/${id}/activate`,
+      {},
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  deactivateState(id: number): Observable<ApiResponse<State>> {
+    return this.http.post<ApiResponse<State>>(
+      `${this.baseUrl}states/${id}/deactivate`,
+      {},
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+  toggleStateStatus(id: number, active: boolean): Observable<ApiResponse<State>> {
+    if (active) {
+      return this.activateState(id);
+    } else {
+      return this.deactivateState(id);
+    }
+  }
+
+  getActiveStates(): Observable<ApiResponse<State[]>> {
+    return this.http.get<ApiResponse<State[]>>(
+      `${this.baseUrl}states/active`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  searchStates(searchTerm: string, page: number = 1, limit: number = 10): Observable<ApiResponse<State[]>> {
+    return this.http.get<ApiResponse<State[]>>(
+      `${this.baseUrl}states/search/${searchTerm}?page=${page}&limit=${limit}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getStateDropdown(): Observable<ApiResponse<State[]>> {
+    return this.http.get<ApiResponse<State[]>>(
+      `${this.baseUrl}states/active`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getStateStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}states/stats/overview`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  bulkUpdateStateStatus(stateIds: number[], active: boolean): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.baseUrl}states/bulk/status`,
+      { stateIds, active },
+      { headers: this.getHeaders('application/json') }
+    );
+  }
+
+
+
+
+
+  // User Operations
+getUsers(
+  page: number = 1, 
+  limit: number = 10, 
+  search?: string, 
+  sortBy?: string, 
+  sortOrder?: string,
+  roleId?: number,
+  stateId?: number
+): Observable<ApiResponse<User[]>> {
+  let params = `?page=${page}&limit=${limit}`;
+  if (search && search.trim()) {
+    params += `&search=${encodeURIComponent(search)}`;
+  }
+  if (sortBy) {
+    params += `&sortBy=${sortBy}`;
+  }
+  if (sortOrder) {
+    params += `&sortOrder=${sortOrder}`;
+  }
+  if (roleId) {
+    params += `&roleId=${roleId}`;
+  }
+  if (stateId) {
+    params += `&stateId=${stateId}`;
+  }
+  
+  return this.http.get<ApiResponse<User[]>>(
+    this.baseUrl + "users" + params,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+getUserById(id: number): Observable<ApiResponse<User>> {
+  return this.http.get<ApiResponse<User>>(
+    this.baseUrl + "users/" + id,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+createUser(data: Partial<User>): Observable<ApiResponse<User>> {
+  return this.http.post<ApiResponse<User>>(
+    this.baseUrl + "users", data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+updateUser(id: number, data: Partial<User>): Observable<ApiResponse<User>> {
+  return this.http.put<ApiResponse<User>>(
+    this.baseUrl + "users/" + id, data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+deleteUser(id: number): Observable<ApiResponse<any>> {
+  return this.http.delete<ApiResponse<any>>(
+    this.baseUrl + "users/" + id,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+toggleUserStatus(id: number, active: boolean): Observable<ApiResponse<User>> {
+  return this.http.post<ApiResponse<User>>(
+    this.baseUrl + "users/" + id + "/toggle-status", 
+    { active },
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+verifyUser(id: number): Observable<ApiResponse<User>> {
+  return this.http.post<ApiResponse<User>>(
+    this.baseUrl + "users/" + id + "/verify", 
+    {},
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+changePassword(id: number, newPassword: string): Observable<ApiResponse<any>> {
+  return this.http.post<ApiResponse<any>>(
+    this.baseUrl + "users/" + id + "/change-password", 
+    { newPassword },
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+getActiveUsers(): Observable<ApiResponse<User[]>> {
+  return this.http.get<ApiResponse<User[]>>(
+    this.baseUrl + "users/active",
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+// Range Operations
+getRanges(
+  page: number = 1, 
+  limit: number = 10, 
+  search?: string, 
+  sortBy?: string, 
+  sortOrder?: string,
+  stateId?: number
+): Observable<ApiResponse<Range[]>> {
+  let params = `?page=${page}&limit=${limit}`;
+  if (search && search.trim()) {
+    params += `&search=${encodeURIComponent(search)}`;
+  }
+  if (sortBy) {
+    params += `&sortBy=${sortBy}`;
+  }
+  if (sortOrder) {
+    params += `&sortOrder=${sortOrder}`;
+  }
+  if (stateId) {
+    params += `&stateId=${stateId}`;
+  }
+  
+  return this.http.get<ApiResponse<Range[]>>(
+    this.baseUrl + "ranges" + params,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+createRange(data: Partial<Range>): Observable<ApiResponse<Range>> {
+  return this.http.post<ApiResponse<Range>>(
+    this.baseUrl + "ranges", data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+updateRange(id: number, data: Partial<Range>): Observable<ApiResponse<Range>> {
+  return this.http.put<ApiResponse<Range>>(
+    this.baseUrl + "ranges/" + id, data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+deleteRange(id: number): Observable<ApiResponse<any>> {
+  return this.http.delete<ApiResponse<any>>(
+    this.baseUrl + "ranges/" + id,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+// District Operations
+getDistricts(
+  page: number = 1, 
+  limit: number = 10, 
+  search?: string, 
+  sortBy?: string, 
+  sortOrder?: string,
+  stateId?: number,
+  rangeId?: number
+): Observable<ApiResponse<District[]>> {
+  let params = `?page=${page}&limit=${limit}`;
+  if (search && search.trim()) {
+    params += `&search=${encodeURIComponent(search)}`;
+  }
+  if (sortBy) {
+    params += `&sortBy=${sortBy}`;
+  }
+  if (sortOrder) {
+    params += `&sortOrder=${sortOrder}`;
+  }
+  if (stateId) {
+    params += `&stateId=${stateId}`;
+  }
+  if (rangeId) {
+    params += `&rangeId=${rangeId}`;
+  }
+  
+  return this.http.get<ApiResponse<District[]>>(
+    this.baseUrl + "districts" + params,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+createDistrict(data: Partial<District>): Observable<ApiResponse<District>> {
+  return this.http.post<ApiResponse<District>>(
+    this.baseUrl + "districts", data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+updateDistrict(id: number, data: Partial<District>): Observable<ApiResponse<District>> {
+  return this.http.put<ApiResponse<District>>(
+    this.baseUrl + "districts/" + id, data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+deleteDistrict(id: number): Observable<ApiResponse<any>> {
+  return this.http.delete<ApiResponse<any>>(
+    this.baseUrl + "districts/" + id,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+
+
+
+toggleRoleStatus(id: number, active: boolean): Observable<ApiResponse<Role>> {
+  return this.http.post<ApiResponse<Role>>(
+    this.baseUrl + "roles/" + id + "/toggle-status", 
+    { active },
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
 
 
 
