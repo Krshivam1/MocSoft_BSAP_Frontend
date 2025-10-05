@@ -45,30 +45,13 @@
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th (click)="sortTable('rangeName')" class="sortable">
-            Range
-            <span class="sort-icon" [class.active]="sortColumn === 'rangeName'">
-              {{ sortDirection === 'asc' ? '↑' : '↓' }}
-            </span>
-          </th>
+       
           <th (click)="sortTable('districtName')" class="sortable">
             District Name
             <span class="sort-icon" [class.active]="sortColumn === 'districtName'">
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th (click)="sortTable('districtHead')" class="sortable">
-            District Head
-            <span class="sort-icon" [class.active]="sortColumn === 'districtHead'">
-              {{ sortDirection === 'asc' ? '↑' : '↓' }}
-            </span>
-          </th>
-          <th>Mobile</th>
-          <th>Contact</th>
-          <th>Email</th>
-          <th>Area</th>
-          <th>Description</th>
-          <th>Image</th>
           <th (click)="sortTable('active')" class="sortable">
             Active
             <span class="sort-icon" [class.active]="sortColumn === 'active'">
@@ -79,29 +62,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let district of paginatedDistricts; trackBy: trackByDistrictId">
+        <tr *ngFor="let district of districts; trackBy: trackByDistrictId">
           <td>{{ district.id }}</td>
-          <td>{{ district.rangeName }}</td>
           <td>
             <strong>{{ district.districtName }}</strong>
-          </td>
-          <td>{{ district.districtHead }}</td>
-          <td>{{ district.districtMobileNo }}</td>
-          <td>{{ district.districtContactNo }}</td>
-          <td>{{ district.districtUserId }}</td>
-          <td>
-            <span class="area-badge">{{ district.area }}</span>
-          </td>
-          <td class="description-cell" [title]="district.districtDescription">
-            {{ district.districtDescription }}
-          </td>
-          <td>
-            <div class="image-preview" *ngIf="district.districtHeadImage; else noImage">
-              <img [src]="district.districtHeadImage" alt="Head Image" class="thumbnail">
-            </div>
-            <ng-template #noImage>
-              <span class="no-image">No Image</span>
-            </ng-template>
           </td>
           <td>
             <span class="status-badge" [class.active]="district.active" [class.inactive]="!district.active">
@@ -121,8 +85,8 @@
             </div>
           </td>
         </tr>
-        <tr *ngIf="paginatedDistricts.length === 0">
-          <td colspan="12" class="no-data">No districts found</td>
+        <tr *ngIf="districts.length === 0">
+          <td colspan="4" class="no-data">No districts found</td>
         </tr>
       </tbody>
     </table>
@@ -177,111 +141,23 @@
       
       <div class="modal-body">
         <form (ngSubmit)="isEditMode ? updateDistrict() : addDistrict()" #districtForm="ngForm">
-      <div class="form-group">
-        <label for="rangeName" class="required">Range Name</label>
-        <input 
-          type="text" 
-          id="rangeName" 
-          name="rangeName" 
-          [(ngModel)]="currentDistrict.rangeName" 
-          #rangeName="ngModel"
-          required 
-          class="form-control"
-          [class.error]="rangeName.touched && rangeName.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="rangeName.touched && rangeName.errors?.['required']">
-          Range name is required
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="districtName" class="required">District Name</label>
+            <input 
+              type="text" 
+              id="districtName" 
+              name="districtName" 
+              [(ngModel)]="currentDistrict.districtName" 
+              #districtName="ngModel"
+              required 
+              class="form-control"
+              [class.error]="districtName.touched && districtName.errors?.['required']"
+            />
+            <div class="error-message" *ngIf="districtName.touched && districtName.errors?.['required']">
+              District name is required
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="districtName" class="required">District Name</label>
-        <input 
-          type="text" 
-          id="districtName" 
-          name="districtName" 
-          [(ngModel)]="currentDistrict.districtName" 
-          #districtName="ngModel"
-          required 
-          class="form-control"
-          [class.error]="districtName.touched && districtName.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="districtName.touched && districtName.errors?.['required']">
-          District name is required
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="districtHead" class="required">District Head</label>
-        <input 
-          type="text" 
-          id="districtHead" 
-          name="districtHead" 
-          [(ngModel)]="currentDistrict.districtHead" 
-          #districtHead="ngModel"
-          required 
-          class="form-control"
-          [class.error]="districtHead.touched && districtHead.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="districtHead.touched && districtHead.errors?.['required']">
-          District head is required
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="districtMobileNo">Mobile Number</label>
-        <input 
-          type="tel" 
-          id="districtMobileNo" 
-          name="districtMobileNo" 
-          [(ngModel)]="currentDistrict.districtMobileNo" 
-          class="form-control"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="districtContactNo">Contact Number</label>
-        <input 
-          type="tel" 
-          id="districtContactNo" 
-          name="districtContactNo" 
-          [(ngModel)]="currentDistrict.districtContactNo" 
-          class="form-control"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="districtUserId">Email</label>
-        <input 
-          type="email" 
-          id="districtUserId" 
-          name="districtUserId" 
-          [(ngModel)]="currentDistrict.districtUserId" 
-          class="form-control"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="area">Area</label>
-        <input 
-          type="text" 
-          id="area" 
-          name="area" 
-          [(ngModel)]="currentDistrict.area" 
-          class="form-control"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="districtDescription">Description</label>
-        <textarea 
-          id="districtDescription" 
-          name="districtDescription" 
-          [(ngModel)]="currentDistrict.districtDescription" 
-          class="form-control"
-          rows="3">
-        </textarea>
-      </div>
 
           <div class="form-group">
             <div class="checkbox-group">

@@ -1,7 +1,9 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { environment } from '../../environment/environment';
+import Districts from '../models/Districts';
 
 export interface Menu {
   id: number;
@@ -155,11 +157,9 @@ export interface User {
   updatedBy?: number;
   createdAt?: string;
   updatedAt?: string;
-  
-  // Association fields (optional, populated when included)
   state?: State;
   role?: Role;
-  district?: District;
+  district?: Districts;
   range?: Range;
 }
 
@@ -174,17 +174,6 @@ export interface Range {
   updatedAt?: string;
 }
 
-export interface District {
-  id: number;
-  districtName: string;
-  rangeId?: number;
-  stateId?: number;
-  active: boolean;
-  createdBy?: number;
-  updatedBy?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 export interface Question {
   id: number;
@@ -1547,7 +1536,7 @@ getDistricts(
   sortOrder?: string,
   stateId?: number,
   rangeId?: number
-): Observable<ApiResponse<District[]>> {
+): Observable<ApiResponse<Districts[]>> {
   let params = `?page=${page}&limit=${limit}`;
   if (search && search.trim()) {
     params += `&search=${encodeURIComponent(search)}`;
@@ -1565,22 +1554,26 @@ getDistricts(
     params += `&rangeId=${rangeId}`;
   }
   
-  return this.http.get<ApiResponse<District[]>>(
+  return this.http.get<ApiResponse<Districts[]>>(
     this.baseUrl + "districts" + params,
     { headers: this.headersWithToken = this.getHeaders() }
   );
 }
 
-createDistrict(data: Partial<District>): Observable<ApiResponse<District>> {
-  return this.http.post<ApiResponse<District>>(
+createDistrict(data: Partial<Districts>): Observable<ApiResponse<Districts>> {
+  return this.http.post<ApiResponse<Districts>>(
     this.baseUrl + "districts", data,
     { headers: this.headersWithToken = this.getHeaders('application/json') }
   );
 }
 
-updateDistrict(id: number, data: Partial<District>): Observable<ApiResponse<District>> {
-  return this.http.put<ApiResponse<District>>(
-    this.baseUrl + "districts/" + id, data,
+updateDistrict(id: number, data: Partial<Districts>): Observable<ApiResponse<Districts>> {
+  const url = this.baseUrl + "districts/" + id;
+  console.log('Update District URL:', url);
+  console.log('Update District Data:', JSON.stringify(data));
+  
+  return this.http.put<ApiResponse<Districts>>(
+    url, data,
     { headers: this.headersWithToken = this.getHeaders('application/json') }
   );
 }
@@ -1592,7 +1585,21 @@ deleteDistrict(id: number): Observable<ApiResponse<any>> {
   );
 }
 
+activateDistrict(id: number): Observable<ApiResponse<Districts>> {
+  return this.http.post<ApiResponse<Districts>>(
+    this.baseUrl + "districts/" + id + "/activate",
+    {},
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
 
+deactivateDistrict(id: number): Observable<ApiResponse<Districts>> {
+  return this.http.post<ApiResponse<Districts>>(
+    this.baseUrl + "districts/" + id + "/deactivate",
+    {},
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
 
 
 toggleRoleStatus(id: number, active: boolean): Observable<ApiResponse<Role>> {

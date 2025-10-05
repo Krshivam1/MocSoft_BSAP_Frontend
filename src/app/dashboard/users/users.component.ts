@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { ApiService, User, ApiResponse, Role, State, District, Range } from '../../services/api.service';
+import { ApiService, User, ApiResponse, Role, State, Range } from '../../services/api.service';
+import Districts from '../../models/Districts';
 
 @Component({
   selector: 'app-users',
@@ -8,18 +9,15 @@ import { ApiService, User, ApiResponse, Role, State, District, Range } from '../
   styleUrls: ['./users.component.css']
 })
 export class UsersComponent implements OnInit, OnDestroy {
-  // Data properties
   users: User[] = [];
   filteredUsers: User[] = [];
   paginatedUsers: User[] = [];
   
-  // Modal properties
   showModal = false;
   currentUser: User = this.createEmptyUser();
   isEditMode = false;
   isLoading = false;
   
-  // Search and pagination properties
   searchTerm = '';
   currentPage = 1;
   itemsPerPage = 10;
@@ -27,21 +25,17 @@ export class UsersComponent implements OnInit, OnDestroy {
   totalItems = 0;
   totalPages = 0;
   
-  // Sorting properties
   sortColumn = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  // Dropdown data
   roles: Role[] = [];
   states: State[] = [];
-  districts: District[] = [];
+  districts: Districts[] = [];
   ranges: Range[] = [];
 
-  // Debouncing properties
   private searchSubject = new Subject<string>();
   private searchSubscription?: Subscription;
   
-  // Math reference for template
   Math = Math;
 
   constructor(private apiService: ApiService) {}
@@ -53,60 +47,44 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Clean up subscription to prevent memory leaks
     if (this.searchSubscription) {
       this.searchSubscription.unsubscribe();
     }
   }
 
-  /**
-   * Set up debounced search functionality
-   */
   private setupSearchDebouncing(): void {
     this.searchSubscription = this.searchSubject
       .pipe(
-        debounceTime(500), // Wait 500ms after last keystroke
-        distinctUntilChanged() // Only search if value changed
+        debounceTime(500), 
+        distinctUntilChanged() 
       )
       .subscribe((searchTerm: string) => {
         this.performSearch(searchTerm);
       });
   }
 
-  /**
-   * Called when user types in search input
-   */
+
   onSearchInput(): void {
     this.searchSubject.next(this.searchTerm);
   }
 
-  /**
-   * Perform the actual search
-   */
+
   private performSearch(searchTerm: string): void {
     this.currentPage = 1;
     this.loadUsers();
   }
 
-  /**
-   * Manual search trigger
-   */
+
   onSearch(): void {
     this.searchSubject.next(this.searchTerm);
   }
 
-  /**
-   * Clear search and reset
-   */
   clearSearch(): void {
     this.searchTerm = '';
     this.currentPage = 1;
     this.loadUsers();
   }
 
-  /**
-   * Load users from API
-   */
   loadUsers(): void {
     this.isLoading = true;
     this.apiService.getUsers(
@@ -128,16 +106,11 @@ export class UsersComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.isLoading = false;
         console.error('Error loading users:', error);
-        // Handle error - show message to user
       }
     });
   }
 
-  /**
-   * Load dropdown data for forms
-   */
   loadDropdownData(): void {
-    // Load roles
     this.apiService.getActiveRoles().subscribe({
       next: (response: ApiResponse<Role[]>) => {
         if (response.status === 'SUCCESS') {
@@ -149,7 +122,6 @@ export class UsersComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Load states
     this.apiService.getActiveStates().subscribe({
       next: (response: ApiResponse<State[]>) => {
         if (response.status === 'SUCCESS') {
@@ -222,7 +194,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     };
   }
 
-  // Search and filter methods
   onPageSizeChange(): void {
     this.itemsPerPage = this.pageSize;
     this.currentPage = 1;
@@ -234,9 +205,8 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.updatePaginatedData();
   }
 
-  // Pagination methods
   private updatePaginatedData(): void {
-    this.paginatedUsers = [...this.users]; // Already paginated from API
+    this.paginatedUsers = [...this.users]; 
   }
 
   goToPage(page: number): void {
@@ -282,7 +252,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       if (startPage > 1) {
         visiblePages.push(1);
         if (startPage > 2) {
-          visiblePages.push(-1); // Ellipsis
+          visiblePages.push(-1); 
         }
       }
       
@@ -292,7 +262,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       
       if (endPage < this.totalPages) {
         if (endPage < this.totalPages - 1) {
-          visiblePages.push(-1); // Ellipsis
+          visiblePages.push(-1); 
         }
         visiblePages.push(this.totalPages);
       }
@@ -301,7 +271,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     return visiblePages;
   }
 
-  // Sorting functionality
   sortTable(column: string): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -310,12 +279,10 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.sortDirection = 'asc';
     }
 
-    // Reload from API with new sorting
     this.loadUsers();
   }
 
   private getSortByField(): string {
-    // Map UI column names to API field names
     const fieldMap: { [key: string]: string } = {
       'id': 'id',
       'name': 'firstName',
@@ -328,7 +295,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     return fieldMap[this.sortColumn] || 'firstName';
   }
 
-  // Modal functionality
   showAddUserModal(): void {
     this.isEditMode = false;
     this.currentUser = this.createEmptyUser();
@@ -339,7 +305,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.currentUser = this.createEmptyUser();
     this.isEditMode = false;
-    this.districts = []; // Reset districts
+    this.districts = []; 
   }
 
   editUser(user: User): void {
@@ -358,7 +324,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.apiService.toggleUserStatus(user.id, !user.active).subscribe({
       next: (response: ApiResponse<User>) => {
         if (response.status === 'SUCCESS') {
-          // Update local data
           const index = this.users.findIndex(u => u.id === user.id);
           if (index !== -1) {
             this.users[index].active = !user.active;
@@ -368,15 +333,13 @@ export class UsersComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error toggling user status:', error);
-        // Handle error - show message to user
       }
     });
   }
 
-  // Handle range selection change
   onRangeChange(rangeId?: number): void {
     this.currentUser.rangeId = rangeId;
-    this.currentUser.districtId = undefined; // Reset district when range changes
+    this.currentUser.districtId = undefined; 
     // this.loadDistricts(rangeId);
   }
 
@@ -389,13 +352,12 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         if (response.status === 'SUCCESS') {
           this.closeModal();
-          this.loadUsers(); // Reload to get the latest data
+          this.loadUsers(); 
         }
       },
       error: (error) => {
         this.isLoading = false;
         console.error('Error creating user:', error);
-        // Handle error - show message to user
       }
     });
   }
@@ -409,18 +371,16 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         if (response.status === 'SUCCESS') {
           this.closeModal();
-          this.loadUsers(); // Reload to get the latest data
+          this.loadUsers(); 
         }
       },
       error: (error) => {
         this.isLoading = false;
         console.error('Error updating user:', error);
-        // Handle error - show message to user
       }
     });
   }
 
-  // Helper properties for template
   get showingStart(): number {
     return (this.currentPage - 1) * this.itemsPerPage + 1;
   }
@@ -429,39 +389,33 @@ export class UsersComponent implements OnInit, OnDestroy {
     return Math.min(this.currentPage * this.itemsPerPage, this.totalItems);
   }
 
-  // Get full name for display
   getFullName(user: User): string {
     return `${user.firstName} ${user.lastName}`.trim();
   }
 
-  // Get role name for display
   getRoleName(roleId: number): string {
     const role = this.roles.find(r => r.id === roleId);
     return role ? role.roleName : 'Unknown';
   }
 
-  // Get state name for display
   getStateName(stateId?: number): string {
     if (!stateId) return '-';
     const state = this.states.find(s => s.id === stateId);
     return state ? state.stateName : 'Unknown';
   }
 
-  // Get district name for display
   getDistrictName(districtId?: number): string {
     if (!districtId) return '-';
     const district = this.districts.find(d => d.id === districtId);
     return district ? district.districtName : 'Unknown';
   }
 
-  // Get range name for display
   getRangeName(rangeId?: number): string {
     if (!rangeId) return '-';
     const range = this.ranges.find(r => r.id === rangeId);
     return range ? range.rangeName : 'Unknown';
   }
 
-  // TrackBy function for performance
   trackByUserId(index: number, user: User): number {
     return user.id;
   }

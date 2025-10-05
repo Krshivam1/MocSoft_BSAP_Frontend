@@ -24,10 +24,10 @@
 }
 
 .data-table th:nth-child(1) { width: 4%; }   /* ID */
-.data-table th:nth-child(2) { width: 8%; }   /* Range */
-.data-table th:nth-child(3) { width: 10%; }  /* District Name */
-.data-table th:nth-child(4) { width: 9%; }   /* District Head */
-.data-table th:nth-child(5) { width: 7%; }   /* Mobile */
+.data-table th:nth-child(2) { width: 40%; }   /* Range */
+.data-table th:nth-child(3) { width: 16%; }  /* District Name */
+.data-table th:nth-child(4) { width: 40%; }   /* District Head */
+/* .data-table th:nth-child(5) { width: 7%; }   /* Mobile */
 .data-table th:nth-child(6) { width: 7%; }   /* Contact */
 .data-table th:nth-child(7) { width: 8%; }   /* Email */
 .data-table th:nth-child(8) { width: 5%; }   /* Area */
@@ -47,7 +47,7 @@
 .data-table td:nth-child(9) { width: 15%; }  /* Description */
 .data-table td:nth-child(10) { width: 5%; }  /* Image */
 .data-table td:nth-child(11) { width: 6%; }  /* Active */
-.data-table td:nth-child(12) { width: 16%; } /* Actions */
+.data-table td:nth-child(12) { width: 16%; } Actions */
 
 .image-preview {
   position: relative;
