@@ -23,6 +23,8 @@ import { QuestionsComponent } from './questions/questions.component';
 import { ReportComponent } from './report/report.component';
 import { CommunicationsComponent } from './communications/communications.component';
 import { PerformanceComponent } from './performance/performance.component';
+import { BattalionComponent } from './battalion/battalion.component';
+
 
 @NgModule({
   imports: [
@@ -52,7 +54,8 @@ import { PerformanceComponent } from './performance/performance.component';
     SubtopicsComponent,
     QuestionsComponent,
     ReportComponent,
-    CommunicationsComponent
+    CommunicationsComponent,
+    BattalionComponent,
   ]
 })
 export class DashboardModule { }

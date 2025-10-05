@@ -192,8 +192,8 @@ export interface Question {
   subTopicId?: number;
   question: string;
   priority?: number;
-  type?: string;
-  defaultVal?: string;
+  type?: 'TEXT' | 'DATE' | 'NUMBER' | 'PRICE' | 'MULTIPLE_CHOICE';
+  defaultVal?: 'NONE' | 'PREVIOUS' | 'QUESTION' | 'PS' | 'SUB' | 'CIRCLE' | 'PSOP';
   defaultQue?: number;
   defaultSub?: number;
   defaultTo?: string;
@@ -671,6 +671,13 @@ export class ApiService {
     
     return this.http.get<ApiResponse<Question[]>>(
         this.baseUrl + `questions/by-sub-topic/${subTopicId}` + params,
+      { headers: this.headersWithToken = this.getHeaders() }
+    );
+  }
+
+  getQuestionsByTopic(topicId: number): Observable<ApiResponse<Question[]>> {
+    return this.http.get<ApiResponse<Question[]>>(
+        this.baseUrl + `questions/by-topic/${topicId}`,
       { headers: this.headersWithToken = this.getHeaders() }
     );
   }
@@ -1355,7 +1362,13 @@ searchRoles(searchTerm: string, page: number = 1, limit: number = 10): Observabl
       return this.deactivateState(id);
     }
   }
-
+  toggledistrictstatus(id: number, active: boolean): Observable<ApiResponse<State>> {
+    if (active) {
+      return this.activateState(id);
+    } else {
+      return this.deactivateState(id);
+    }
+  }
   getActiveStates(): Observable<ApiResponse<State[]>> {
     return this.http.get<ApiResponse<State[]>>(
       `${this.baseUrl}states/active`,

@@ -34,12 +34,13 @@ export class QuestionsComponent implements OnInit {
     subTopicId: '',
     question: '',
     priority: '',
-    type: '',
-    defaultVal: '',
+    type: 'NUMBER',
+    defaultVal: 'NONE',
     isPrevious: false,
     isCumulative: false,
     formula: '',
     defaultQue: '',
+    defaultSub: '',
     active: true
   };
 
@@ -48,6 +49,51 @@ export class QuestionsComponent implements OnInit {
   subTopics: SubTopic[] = [];
   filteredSubTopics: SubTopic[] = [];
   availableQuestions: Question[] = [];
+
+  // Formula Builder State
+  formulaBuilderState = {
+    step: 'question', // 'question', 'subtopic', 'operation'
+    showQuestionDiv: false,
+    showSubTopicDiv: false,
+    showOperationDiv: false,
+    selectedQuestion: '',
+    selectedSubTopic: '',
+    selectedOperation: ''
+  };
+
+  // Question types
+  questionTypes = [
+    { value: 'TEXT', label: 'Text' },
+    { value: 'DATE', label: 'Date' },
+    { value: 'NUMBER', label: 'Number' },
+    { value: 'PRICE', label: 'Price' },
+    { value: 'MULTIPLE_CHOICE', label: 'Multiple Choice' }
+  ];
+
+  // Default value types
+  defaultValueTypes = [
+    { value: 'NONE', label: 'NONE' },
+    { value: 'PREVIOUS', label: 'PREVIOUS' },
+    { value: 'QUESTION', label: 'QUESTION' },
+    { value: 'PS', label: 'PS' },
+    { value: 'SUB', label: 'Subdivision' },
+    { value: 'CIRCLE', label: 'Circle' },
+    { value: 'PSOP', label: 'PS/OP' }
+  ];
+
+  // Mathematical operations
+  mathOperations = [
+    { value: '+', label: 'Plus' },
+    { value: '-', label: 'Minus' },
+    { value: '*', label: 'Multiply' },
+    { value: '/', label: 'Division' },
+    { value: '=', label: 'Equal' },
+    { value: '==', label: 'Equal To' }
+  ];
+
+  // Conditional visibility flags
+  showDefaultQuestion = false;
+  showDefaultSubTopic = false;
 
   constructor(private apiService: ApiService) { }
 
@@ -204,24 +250,138 @@ export class QuestionsComponent implements OnInit {
       subTopicId: '',
       question: '',
       priority: '',
-      type: '',
-      defaultVal: '',
+      type: 'NUMBER',
+      defaultVal: 'NONE',
       isPrevious: false,
       isCumulative: false,
       formula: '',
       defaultQue: '',
+      defaultSub: '',
       active: true
     };
     this.filteredSubTopics = [];
+    this.availableQuestions = [];
+    this.resetFormulaBuilder();
+    this.showDefaultQuestion = false;
+    this.showDefaultSubTopic = false;
   }
 
   onTopicChange(): void {
     this.formData.subTopicId = '';
+    this.formData.formula = '';
+    this.resetFormulaBuilder();
+    
     if (this.formData.topicId) {
       this.loadSubTopicsByTopic(this.formData.topicId);
+      this.loadQuestionsByTopic(this.formData.topicId);
     } else {
       this.filteredSubTopics = [];
+      this.availableQuestions = [];
     }
+  }
+
+  onDefaultValueChange(): void {
+    this.showDefaultQuestion = this.formData.defaultVal === 'QUESTION';
+    this.showDefaultSubTopic = this.formData.defaultVal === 'QUESTION';
+    
+    if (this.formData.defaultVal !== 'QUESTION') {
+      this.formData.defaultQue = '';
+      this.formData.defaultSub = '';
+    }
+  }
+
+  // Formula Builder Methods
+  loadQuestionsByTopic(topicId: number): void {
+    this.apiService.getQuestionsByTopic(topicId).subscribe({
+      next: (response: ApiResponse<Question[]>) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.availableQuestions = response.data;
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading questions:', error);
+      }
+    });
+  }
+
+  startFormulaBuilder(): void {
+    this.formulaBuilderState.showQuestionDiv = true;
+    this.formulaBuilderState.showSubTopicDiv = false;
+    this.formulaBuilderState.showOperationDiv = false;
+    this.formulaBuilderState.step = 'question';
+  }
+
+  resetFormulaBuilder(): void {
+    this.formulaBuilderState = {
+      step: 'question',
+      showQuestionDiv: false,
+      showSubTopicDiv: false,
+      showOperationDiv: false,
+      selectedQuestion: '',
+      selectedSubTopic: '',
+      selectedOperation: ''
+    };
+  }
+
+  onQuestionSelect(): void {
+    if (!this.formulaBuilderState.selectedQuestion) return;
+    
+    // Add question ID to formula
+    this.formData.formula += this.formulaBuilderState.selectedQuestion;
+    
+    // Move to subtopic selection
+    this.formulaBuilderState.showQuestionDiv = false;
+    this.formulaBuilderState.showSubTopicDiv = true;
+    this.formulaBuilderState.showOperationDiv = false;
+    this.formulaBuilderState.step = 'subtopic';
+  }
+
+  onSubTopicSelect(): void {
+    if (this.formulaBuilderState.selectedSubTopic) {
+      // Add subtopic ID with underscore separator
+      this.formData.formula += '_' + this.formulaBuilderState.selectedSubTopic;
+    }
+    
+    // Move to operation selection
+    this.formulaBuilderState.showQuestionDiv = false;
+    this.formulaBuilderState.showSubTopicDiv = false;
+    this.formulaBuilderState.showOperationDiv = true;
+    this.formulaBuilderState.step = 'operation';
+  }
+
+  skipSubTopic(): void {
+    // Skip subtopic and go to operation selection
+    this.formulaBuilderState.showQuestionDiv = false;
+    this.formulaBuilderState.showSubTopicDiv = false;
+    this.formulaBuilderState.showOperationDiv = true;
+    this.formulaBuilderState.step = 'operation';
+  }
+
+  onOperationSelect(): void {
+    if (!this.formulaBuilderState.selectedOperation) return;
+    
+    // Add operation to formula
+    this.formData.formula += this.formulaBuilderState.selectedOperation;
+    
+    // Reset for next question/operation cycle
+    this.formulaBuilderState.selectedQuestion = '';
+    this.formulaBuilderState.selectedSubTopic = '';
+    this.formulaBuilderState.selectedOperation = '';
+    
+    // Show question selection for next part of formula
+    this.formulaBuilderState.showQuestionDiv = true;
+    this.formulaBuilderState.showSubTopicDiv = false;
+    this.formulaBuilderState.showOperationDiv = false;
+    this.formulaBuilderState.step = 'question';
+  }
+
+  resetFormula(): void {
+    this.formData.formula = '';
+    this.resetFormulaBuilder();
+  }
+
+  finishFormula(): void {
+    this.resetFormulaBuilder();
   }
 
   saveQuestion(): void {

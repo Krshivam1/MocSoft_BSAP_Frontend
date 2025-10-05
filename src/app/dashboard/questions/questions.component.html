@@ -184,32 +184,58 @@
         </div>
 
         <div class="form-group">
-          <label for="type">Question Type</label>
+          <label for="type">Question Type <span class="required">*</span></label>
           <select 
             id="type"
             class="form-control"
             [(ngModel)]="formData.type" 
             name="type"
+            required
           >
-            <option value="">Select Type</option>
-            <option value="TEXT">Text</option>
-            <option value="NUMBER">Number</option>
-            <option value="BOOLEAN">Boolean</option>
-            <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-            <option value="RATING">Rating</option>
+            <option *ngFor="let type of questionTypes" [value]="type.value">{{type.label}}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="defaultVal">Default Value</label>
-          <input 
-            type="text"
+          <label for="defaultVal">Default Value <span class="required">*</span></label>
+          <select 
             id="defaultVal"
             class="form-control"
             [(ngModel)]="formData.defaultVal" 
             name="defaultVal"
-            placeholder="Enter default value"
-          />
+            required
+            (change)="onDefaultValueChange()"
+          >
+            <option *ngFor="let defaultType of defaultValueTypes" [value]="defaultType.value">{{defaultType.label}}</option>
+          </select>
+        </div>
+
+        <!-- Conditional Default Question Selection -->
+        <div class="form-group" *ngIf="showDefaultQuestion">
+          <label for="defaultQue">Choose Default Question</label>
+          <select 
+            id="defaultQue"
+            class="form-control"
+            [(ngModel)]="formData.defaultQue" 
+            name="defaultQue"
+          >
+            <option value="">Select Question</option>
+            <option *ngFor="let question of availableQuestions" [value]="question.id">{{question.question}}</option>
+          </select>
+        </div>
+
+        <!-- Conditional Default SubTopic Selection -->
+        <div class="form-group" *ngIf="showDefaultSubTopic">
+          <label for="defaultSub">Choose Default SubTopic</label>
+          <select 
+            id="defaultSub"
+            class="form-control"
+            [(ngModel)]="formData.defaultSub" 
+            name="defaultSub"
+          >
+            <option value="">Select SubTopic</option>
+            <option *ngFor="let subTopic of filteredSubTopics" [value]="subTopic.id">{{subTopic.subTopicName}}</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -240,14 +266,89 @@
 
         <div class="form-group">
           <label for="formula">Question Formula</label>
-          <textarea 
-            id="formula"
-            class="form-control"
-            [(ngModel)]="formData.formula" 
-            name="formula"
-            rows="3"
-            placeholder="Enter question formula"
-          ></textarea>
+          <div class="formula-container">
+            <textarea 
+              id="formula"
+              class="form-control"
+              [(ngModel)]="formData.formula" 
+              name="formula"
+              rows="2"
+              placeholder="Formula will be built automatically"
+              readonly
+            ></textarea>
+            <div class="formula-buttons">
+              <button type="button" class="btn btn-sm btn-primary" (click)="startFormulaBuilder()">
+                Build Formula
+              </button>
+              <button type="button" class="btn btn-sm btn-secondary" (click)="resetFormula()">
+                Reset
+              </button>
+              <button type="button" class="btn btn-sm btn-success" (click)="finishFormula()">
+                Finish
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formula Builder Components -->
+        <div class="formula-builder" *ngIf="formulaBuilderState.showQuestionDiv || formulaBuilderState.showSubTopicDiv || formulaBuilderState.showOperationDiv">
+          
+          <!-- Step 1: Question Selection -->
+          <div class="form-group" *ngIf="formulaBuilderState.showQuestionDiv">
+            <label for="chooseQuestion">Choose Question</label>
+            <select 
+              id="chooseQuestion"
+              class="form-control"
+              [(ngModel)]="formulaBuilderState.selectedQuestion" 
+              name="selectedQuestion"
+              (change)="onQuestionSelect()"
+            >
+              <option value="">Select Question</option>
+              <option *ngFor="let question of availableQuestions" [value]="question.id">
+                {{question.id}} - {{question.question}}
+              </option>
+            </select>
+          </div>
+
+          <!-- Step 2: SubTopic Selection -->
+          <div class="form-group" *ngIf="formulaBuilderState.showSubTopicDiv">
+            <label for="chooseSubTopic">Choose Sub Topic (Optional)</label>
+            <div class="subtopic-selection">
+              <select 
+                id="chooseSubTopic"
+                class="form-control"
+                [(ngModel)]="formulaBuilderState.selectedSubTopic" 
+                name="selectedSubTopic"
+                (change)="onSubTopicSelect()"
+              >
+                <option value="">Select SubTopic</option>
+                <option *ngFor="let subTopic of filteredSubTopics" [value]="subTopic.id">
+                  {{subTopic.subTopicName}}
+                </option>
+              </select>
+              <button type="button" class="btn btn-outline-success btn-sm" (click)="skipSubTopic()">
+                Skip
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 3: Operation Selection -->
+          <div class="form-group" *ngIf="formulaBuilderState.showOperationDiv">
+            <label for="chooseOperation">Choose Operation</label>
+            <select 
+              id="chooseOperation"
+              class="form-control"
+              [(ngModel)]="formulaBuilderState.selectedOperation" 
+              name="selectedOperation"
+              (change)="onOperationSelect()"
+            >
+              <option value="">Select Operation</option>
+              <option *ngFor="let operation of mathOperations" [value]="operation.value">
+                {{operation.label}} ({{operation.value}})
+              </option>
+            </select>
+          </div>
+
         </div>
 
         <div class="form-group">

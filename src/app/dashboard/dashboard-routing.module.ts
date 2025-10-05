@@ -20,6 +20,7 @@ import { QuestionsComponent } from './questions/questions.component';
 import { ReportComponent } from './report/report.component';
 import { CommunicationsComponent } from './communications/communications.component';
 import { PerformanceComponent } from './performance/performance.component';
+import { BattalionComponent } from './battalion/battalion.component';
 
 const routes: Routes = [
   {
@@ -45,7 +46,8 @@ const routes: Routes = [
       { path: 'questions', component: QuestionsComponent },
       { path: 'report', component: ReportComponent },
       { path: 'communications', component: CommunicationsComponent },
-      { path: 'performance', component: PerformanceComponent } // Ensure PerformanceComponent is imported
+      { path: 'performance', component: PerformanceComponent }, // Ensure PerformanceComponent is imported
+      { path: 'battalion', component: BattalionComponent }
     ]
   }
 ];
