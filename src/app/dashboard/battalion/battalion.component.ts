@@ -1,30 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-
-interface Range {
-  id: number;
-  rangeName: string;
-}
+import { ApiService, Battalion, Range, District, ApiResponse } from '../../services/api.service';
 
 interface AdminDistrict {
   id: number;
   rangeId: number;
   districtName: string;
-}
-
-interface Battalion {
-  id: number;
-  rangeId?: number; // selected range
-  adminDistrictId?: number; // selected parent district
-  rangeName?: string;
-  battalionName: string;
-  battalionHead: string;
-  battalionMobileNo?: string;
-  battalionContactNo?: string;
-  battalionUserId?: string;
-  area?: string;
-  battalionDescription?: string;
-  battalionHeadImage?: string;
-  active: boolean;
 }
 @Component({
   selector: 'app-battalion',
@@ -36,6 +16,8 @@ export class BattalionComponent implements OnInit {
   // Data properties
   ranges: Range[] = [];
   adminDistricts: AdminDistrict[] = [];
+
+  constructor(private apiService: ApiService) {}
 
   // Stored battalions list
   battalions: Battalion[] = [];
@@ -78,7 +60,7 @@ export class BattalionComponent implements OnInit {
   // Called when user changes the range select in modal
   onRangeChange(): void {
     // Reset selected district when range changes
-    this.currentDistrict.adminDistrictId = undefined;
+    this.currentDistrict.districtId = undefined;
   }
 
   // Helper to get range name by id (used instead of inline find in template)
@@ -96,76 +78,80 @@ export class BattalionComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadSampleData();
+    this.loadData();
   }
 
-  private loadSampleData() {
-    // Sample ranges
-    this.ranges = [
-      { id: 1, rangeName: 'Central Range Patna' },
-      { id: 2, rangeName: 'Magadh Range Gaya' },
-      { id: 3, rangeName: 'Sahabad Range Dehri' },
-      { id: 4, rangeName: 'Tirhut Range Muzaffarpur' }
-    ];
+  private loadData() {
+    this.loadRanges();
+    this.loadDistricts();
+    this.loadBattalions();
+  }
 
-    // Sample admin districts (for district dropdown)
-    this.adminDistricts = [
-      { id: 1, rangeId: 1, districtName: 'Patna' },
-      { id: 2, rangeId: 2, districtName: 'Gaya' },
-      { id: 3, rangeId: 3, districtName: 'Dehri' },
-      { id: 4, rangeId: 4, districtName: 'Muzaffarpur' }
-    ];
-
-    // Sample battalions list
-    this.battalions = [
-      {
-        id: 1,
-        rangeId: 1,
-        adminDistrictId: 1,
-        rangeName: 'Central Range Patna',
-        battalionName: '1st Patna Battalion',
-        battalionHead: 'Upendra Kumar Sharma',
-        battalionMobileNo: '9431822967',
-        battalionContactNo: '6122219717',
-        battalionUserId: 'batt1.patna@bih.gov.in',
-        area: '3',
-        battalionDescription: 'Patna battalion covering central area',
-        battalionHeadImage: 'assets/images/patna-head.jpg',
-        active: true
+  private loadRanges() {
+    // TODO: Implement real API call when range endpoint is available
+    this.apiService.GetRangeDropdown().subscribe({
+      next: (response: ApiResponse<Range[]>) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.ranges = response.data;
+        }
       },
-      {
-        id: 2,
-        rangeId: 2,
-        adminDistrictId: 2,
-        rangeName: 'Magadh Range Gaya',
-        battalionName: 'Gaya Battalion',
-        battalionHead: 'Rajeev Mishra',
-        battalionMobileNo: '9431822973',
-        battalionContactNo: '6312225901',
-        battalionUserId: 'batt.gaya@bih.gov.in',
-        area: '2',
-        battalionDescription: 'Gaya battalion',
-        battalionHeadImage: 'assets/images/gaya-head.jpg',
-        active: true
+      error: (error) => {
+        console.error('Error loading ranges:', error);
+        this.ranges = [];
       }
-    ];
-
-    this.updateFilteredData();
+    });
   }
+
+  private loadDistricts() {
+    this.apiService.getDistrictDropdown().subscribe({
+      next: (response: ApiResponse<AdminDistrict[]>) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.adminDistricts = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading districts:', error);
+        this.adminDistricts = [];
+      }
+    });
+  }
+
+  private loadBattalions() {
+    this.isLoading = true;
+    this.apiService.getBattalions(this.currentPage, this.itemsPerPage).subscribe({
+      next: (response: ApiResponse<Battalion[]>) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.battalions = response.data;
+          if (response.pagination) {
+            this.totalItems = response.pagination.total || 0;
+            this.totalPages = response.pagination.totalPages || 0;
+          }
+          this.updateFilteredData();
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading battalions:', error);
+        this.battalions = [];
+        this.updateFilteredData();
+        this.isLoading = false;
+      }
+    });
+  }
+
+
 
   private createEmptyDistrict(): Battalion {
     return {
       id: 0,
       rangeId: undefined,
-      adminDistrictId: undefined,
-      rangeName: '',
+      districtId: undefined,
       battalionName: '',
       battalionHead: '',
       battalionMobileNo: '',
       battalionContactNo: '',
-      battalionUserId: '',
-      area: '',
-      battalionDescription: '',
+      battalionEmail: '',
+      battalionArea: '',
       active: true
     };
   }
@@ -180,10 +166,10 @@ export class BattalionComponent implements OnInit {
     // Apply search filter
     this.filteredBattalions = this.battalions.filter(b =>
       b.battalionName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (b.rangeName || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+      (b.range?.rangeName || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
       (b.battalionHead || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (b.battalionUserId || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (b.area || '').toLowerCase().includes(this.searchTerm.toLowerCase())
+      (b.battalionEmail || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+      (b.battalionArea || '').toLowerCase().includes(this.searchTerm.toLowerCase())
     );
 
     this.totalItems = this.filteredBattalions.length;
@@ -313,46 +299,92 @@ export class BattalionComponent implements OnInit {
   }
 
   toggleDistrictStatus(district: Battalion): void {
-    const index = this.battalions.findIndex(d => d.id === district.id);
-    if (index !== -1) {
-      this.battalions[index].active = !this.battalions[index].active;
-      this.updateFilteredData();
-      // TODO: Implement actual API call
-      console.log('Battalion status toggled:', this.battalions[index]);
-    }
+    this.apiService.toggleBattalionStatus(district.id).subscribe({
+      next: (response: ApiResponse<Battalion>) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          const index = this.battalions.findIndex(d => d.id === district.id);
+          if (index !== -1) {
+            this.battalions[index] = response.data;
+            this.updateFilteredData();
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error toggling battalion status:', error);
+        // Show error message to user (you can implement toast/notification here)
+        alert('Failed to toggle battalion status. Please try again.');
+      }
+    });
   }
 
   addDistrict(): void {
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const newId = this.getNextId();
-      this.currentDistrict.id = newId;
-      this.currentDistrict.active = this.currentDistrict.active || false;
-      this.battalions.unshift({ ...this.currentDistrict });
-      this.updateFilteredData();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
+    const battalionData: Partial<Battalion> = {
+      rangeId: this.currentDistrict.rangeId,
+      districtId: this.currentDistrict.districtId,
+      battalionName: this.currentDistrict.battalionName,
+      battalionHead: this.currentDistrict.battalionHead,
+      battalionContactNo: this.currentDistrict.battalionContactNo,
+      battalionMobileNo: this.currentDistrict.battalionMobileNo,
+      battalionEmail: this.currentDistrict.battalionEmail,
+      battalionArea: this.currentDistrict.battalionArea,
+      active: this.currentDistrict.active
+    };
+
+    this.apiService.createBattalion(battalionData).subscribe({
+      next: (response: ApiResponse<Battalion>) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.battalions.unshift(response.data);
+          this.updateFilteredData();
+          this.closeModal();
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error creating battalion:', error);
+        this.isLoading = false;
+        // Show error message to user (you can implement toast/notification here)
+        alert('Failed to create battalion. Please try again.');
+      }
+    });
   }
 
   updateDistrict(): void {
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const index = this.battalions.findIndex(d => d.id === this.currentDistrict.id);
-      if (index !== -1) {
-        this.battalions[index] = { ...this.currentDistrict };
+    const battalionData: Partial<Battalion> = {
+      rangeId: this.currentDistrict.rangeId,
+      districtId: this.currentDistrict.districtId,
+      battalionName: this.currentDistrict.battalionName,
+      battalionHead: this.currentDistrict.battalionHead,
+      battalionContactNo: this.currentDistrict.battalionContactNo,
+      battalionMobileNo: this.currentDistrict.battalionMobileNo,
+      battalionEmail: this.currentDistrict.battalionEmail,
+      battalionArea: this.currentDistrict.battalionArea,
+      active: this.currentDistrict.active
+    };
+
+    this.apiService.updateBattalion(this.currentDistrict.id, battalionData).subscribe({
+      next: (response: ApiResponse<Battalion>) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          const index = this.battalions.findIndex(d => d.id === this.currentDistrict.id);
+          if (index !== -1) {
+            this.battalions[index] = response.data;
+          }
+          this.updateFilteredData();
+          this.closeModal();
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error updating battalion:', error);
+        this.isLoading = false;
+        // Show error message to user (you can implement toast/notification here)
+        alert('Failed to update battalion. Please try again.');
       }
-      this.updateFilteredData();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
+    });
   }
 
-  private getNextId(): number {
-    return this.battalions.length > 0 ? Math.max(...this.battalions.map(d => d.id)) + 1 : 1;
-  }
+
 
   // TrackBy function for performance
   trackByDistrictId(index: number, district: Battalion): number {

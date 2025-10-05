@@ -186,6 +186,34 @@ export interface District {
   updatedAt?: string;
 }
 
+export interface Battalion {
+  id: number;
+  rangeId?: number;
+  districtId?: number;
+  battalionName: string;
+  battalionHead?: string;
+  battalionContactNo?: string;
+  battalionMobileNo?: string;
+  battalionEmail?: string;
+  battalionImage?: string;
+  battalionPersonImage?: string;
+  battalionArea?: string;
+  createdBy?: number;
+  updatedBy?: number;
+  active: boolean;
+  created_date?: string;
+  updated_date?: string;
+  range?: {
+    id: number;
+    rangeName: string;
+    rangeHead?: string;
+  };
+  district?: {
+    id: number;
+    districtName: string;
+  };
+}
+
 export interface Question {
   id: number;
   topicId: number;
@@ -1551,6 +1579,14 @@ deleteRange(id: number): Observable<ApiResponse<any>> {
   );
 }
 
+GetRangeDropdown(): Observable<ApiResponse<any>> {
+  return this.http.get<ApiResponse<any>>(
+    this.baseUrl + "ranges/status/active",
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+
 // District Operations
 getDistricts(
   page: number = 1, 
@@ -1605,6 +1641,13 @@ deleteDistrict(id: number): Observable<ApiResponse<any>> {
   );
 }
 
+getDistrictDropdown(): Observable<ApiResponse<any>> {
+  return this.http.get<ApiResponse<any>>(
+    this.baseUrl + "districts/status/active",
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
 
 
 
@@ -1616,10 +1659,73 @@ toggleRoleStatus(id: number, active: boolean): Observable<ApiResponse<Role>> {
   );
 }
 
+// Battalion Operations
+getBattalions(
+  page: number = 1,
+  limit: number = 10,
+  sortOrder: 'ASC' | 'DESC' = 'ASC'
+): Observable<ApiResponse<Battalion[]>> {
+  const params = `?page=${page}&limit=${limit}&sortOrder=${sortOrder}`;
+  return this.http.get<ApiResponse<Battalion[]>>(
+    this.baseUrl + "battalions" + params,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
 
+getBattalionById(id: number): Observable<ApiResponse<Battalion>> {
+  return this.http.get<ApiResponse<Battalion>>(
+    this.baseUrl + "battalions/" + id,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
 
+createBattalion(data: Partial<Battalion>): Observable<ApiResponse<Battalion>> {
+  return this.http.post<ApiResponse<Battalion>>(
+    this.baseUrl + "battalions", data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
 
+updateBattalion(id: number, data: Partial<Battalion>): Observable<ApiResponse<Battalion>> {
+  return this.http.put<ApiResponse<Battalion>>(
+    this.baseUrl + "battalions/" + id, data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
 
-  
+deleteBattalion(id: number): Observable<ApiResponse<any>> {
+  return this.http.delete<ApiResponse<any>>(
+    this.baseUrl + "battalions/" + id,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+toggleBattalionStatus(id: number): Observable<ApiResponse<Battalion>> {
+  return this.http.patch<ApiResponse<Battalion>>(
+    this.baseUrl + "battalions/" + id + "/toggle-status", {},
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+getBattalionsByRange(rangeId: number): Observable<ApiResponse<Battalion[]>> {
+  return this.http.get<ApiResponse<Battalion[]>>(
+    this.baseUrl + "battalions/by-range/" + rangeId,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+getBattalionsByDistrict(districtId: number): Observable<ApiResponse<Battalion[]>> {
+  return this.http.get<ApiResponse<Battalion[]>>(
+    this.baseUrl + "battalions/by-district/" + districtId,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+
+testBattalionRoutes(): Observable<any> {
+  return this.http.get<any>(
+    this.baseUrl + "battalions/test",
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
 
 }

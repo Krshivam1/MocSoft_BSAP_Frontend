@@ -94,13 +94,13 @@
         <tr *ngFor="let battalion of paginatedBattalions; trackBy: trackByDistrictId">
           <td>{{ battalion.id }}</td>
           <td>{{ getRangeName(battalion.rangeId) }}</td>
-          <td>{{ getDistrictName(battalion.adminDistrictId) }}</td>
+          <td>{{ getDistrictName(battalion.districtId) }}</td>
           <td><strong>{{ battalion.battalionName }}</strong></td>
           <td>{{ battalion.battalionHead }}</td>
           <td>{{ battalion.battalionMobileNo }}</td>
           <td>{{ battalion.battalionContactNo }}</td>
-          <td>{{ battalion.battalionUserId }}</td>
-          <td>{{ battalion.area }}</td>
+          <td>{{ battalion.battalionEmail }}</td>
+          <td>{{ battalion.battalionArea }}</td>
           <td>
             <span class="status-badge" [class.active]="battalion.active" [class.inactive]="!battalion.active">
               {{ battalion.active ? 'YES' : 'NO' }}
@@ -178,7 +178,7 @@
         <form (ngSubmit)="isEditMode ? updateDistrict() : addDistrict()" #districtForm="ngForm">
       <div class="form-group">
         <label for="rangeSelect" class="required">Range <span class="required">*</span></label>
-        <select id="rangeSelect" name="rangeId" class="form-control" required [(ngModel)]="currentDistrict.rangeId" (change)="onRangeChange()">
+        <select id="rangeSelect" name="rangeId" class="form-select" required [(ngModel)]="currentDistrict.rangeId" (change)="onRangeChange()">
           <option value="">Select Range</option>
           <option *ngFor="let r of ranges" [value]="r.id">{{ r.rangeName }}</option>
         </select>
@@ -186,9 +186,9 @@
 
       <div class="form-group">
         <label for="districtSelect">District <span class="required">*</span></label>
-        <select id="districtSelect" name="adminDistrictId" class="form-control" required [(ngModel)]="currentDistrict.adminDistrictId">
+        <select id="districtSelect" name="districtId" class="form-select" required [(ngModel)]="currentDistrict.districtId">
           <option value="">Select District</option>
-          <option *ngFor="let d of districtsForSelectedRange" [value]="d.id">{{ d.districtName }}</option>
+          <option *ngFor="let d of adminDistricts" [value]="d.id">{{ d.districtName }}</option>
         </select>
       </div>
 
@@ -213,18 +213,13 @@
       </div>
 
       <div class="form-group">
-        <label for="battalionUserId">Battalion User ID (Email)</label>
-        <input type="email" id="battalionUserId" name="battalionUserId" class="form-control" [(ngModel)]="currentDistrict.battalionUserId" />
+        <label for="battalionEmail">Battalion User ID (Email)</label>
+        <input type="email" id="battalionEmail" name="battalionEmail" class="form-control" [(ngModel)]="currentDistrict.battalionEmail" />
       </div>
 
       <div class="form-group">
-        <label for="area">Area</label>
-        <input type="text" id="area" name="area" class="form-control" [(ngModel)]="currentDistrict.area" />
-      </div>
-
-      <div class="form-group">
-        <label for="battalionDescription">Description</label>
-        <textarea id="battalionDescription" name="battalionDescription" class="form-control" rows="3" [(ngModel)]="currentDistrict.battalionDescription"></textarea>
+        <label for="battalionArea">Area</label>
+        <input type="text" id="battalionArea" name="battalionArea" class="form-control" [(ngModel)]="currentDistrict.battalionArea" />
       </div>
 
           <div class="form-group">
