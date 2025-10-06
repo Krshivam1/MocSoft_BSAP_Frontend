@@ -269,9 +269,8 @@
                         #formTypeSelect="ngModel">
                   <option value="">Select Form Type</option>
                   <option value="NORMAL">NORMAL</option>
-                  <option value="Q/ST">Q/ST</option>
-                  <option value="MONTHLY">MONTHLY</option>
-                  <option value="YEARLY">YEARLY</option>
+                  <option value="Q/ST">QUESTION / SUBTOPIC</option>
+                  <option value="ST/Q">SUBTOPIC / QUESTION</option>
                 </select>
                 <div class="error-message" *ngIf="formTypeSelect.invalid && formTypeSelect.touched">
                   Form type selection is required
