@@ -223,26 +223,26 @@ export class DistrictComponent implements OnInit, OnDestroy {
   }
 
   toggleDistrictStatus(district: Districts): void {
-    if (!confirm('Are you sure you want to change the status of this district?')) return;
+    // if (!confirm('Are you sure you want to change the status of this district?')) return;
     
-    this.isLoading = true;
+    // this.isLoading = true;
     
-    const apiCall = district.active
-      ? this.apiService.deactivateDistrict(district.id)
-      : this.apiService.activateDistrict(district.id);
+    // const apiCall = district.active
+    //   ? this.apiService.deactivateDistrict(district.id)
+    //   : this.apiService.activateDistrict(district.id);
 
-    apiCall.subscribe({
-      next: (response: ApiResponse<Districts>) => {
-        this.isLoading = false;
-        if (response.status === 'SUCCESS') {
-          this.loadDistricts();
-        }
-      },
-      error: (error: any) => {
-        this.isLoading = false;
-        console.error('Error toggling district status:', error);
-      }
-    });
+    // apiCall.subscribe({
+    //   next: (response: ApiResponse<Districts>) => {
+    //     this.isLoading = false;
+    //     if (response.status === 'SUCCESS') {
+    //       this.loadDistricts();
+    //     }
+    //   },
+    //   error: (error: any) => {
+    //     this.isLoading = false;
+    //     console.error('Error toggling district status:', error);
+    //   }
+    // });
   }
 
   addDistrict(): void {
