@@ -65,6 +65,12 @@
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
+          <th (click)="sortTable('area')" class="sortable">
+            Battalion Specialisation
+            <span class="sort-icon" [class.active]="sortColumn === 'area'">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
 
           <th (click)="sortTable('districtHead')" class="sortable">
             Battalion Head
@@ -75,12 +81,7 @@
           <th>Mobile</th>
           <th>Contact</th>
           <th>Email</th>
-          <th (click)="sortTable('area')" class="sortable">
-            Area
-            <span class="sort-icon" [class.active]="sortColumn === 'area'">
-              {{ sortDirection === 'asc' ? '↑' : '↓' }}
-            </span>
-          </th>
+
           <th (click)="sortTable('active')" class="sortable">
             Active
             <span class="sort-icon" [class.active]="sortColumn === 'active'">
@@ -96,11 +97,11 @@
           <td>{{ getRangeName(battalion.rangeId) }}</td>
           <td>{{ getDistrictName(battalion.districtId) }}</td>
           <td><strong>{{ battalion.battalionName }}</strong></td>
+          <td>{{ battalion.battalionArea }}</td>
           <td>{{ battalion.battalionHead }}</td>
           <td>{{ battalion.battalionMobileNo }}</td>
           <td>{{ battalion.battalionContactNo }}</td>
           <td>{{ battalion.battalionEmail }}</td>
-          <td>{{ battalion.battalionArea }}</td>
           <td>
             <span class="status-badge" [class.active]="battalion.active" [class.inactive]="!battalion.active">
               {{ battalion.active ? 'YES' : 'NO' }}
@@ -168,7 +169,7 @@
   <div class="modal-dialog" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">{{ isEditMode ? 'Edit District' : 'Add District' }}</h4>
+        <h4 class="modal-title">{{ isEditMode ? 'Edit Battalion' : 'Add Battalion' }}</h4>
         <button type="button" class="close-btn" (click)="closeModal()">
           <span>&times;</span>
         </button>
@@ -218,7 +219,7 @@
       </div>
 
       <div class="form-group">
-        <label for="battalionArea">Area</label>
+        <label for="battalionArea">Battalion Specialisation</label>
         <input type="text" id="battalionArea" name="battalionArea" class="form-control" [(ngModel)]="currentDistrict.battalionArea" />
       </div>
 

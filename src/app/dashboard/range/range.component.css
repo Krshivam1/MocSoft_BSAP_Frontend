@@ -25,14 +25,16 @@
 }
 
 .modal-dialog {
-  margin: 100px auto;
-  max-width: 500px;
+  margin: 50px auto;
+  max-width: 700px;
+  width: 90%;
 }
 
 .modal-content {
   background: #fff;
-  padding: 15px;
-  border-radius: 6px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 .page-title-subheading {
   margin-top: 4px; /* small spacing below heading */

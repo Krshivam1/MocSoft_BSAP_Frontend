@@ -1579,6 +1579,20 @@ deleteRange(id: number): Observable<ApiResponse<any>> {
   );
 }
 
+activateRange(id: number): Observable<ApiResponse<Range>> {
+  return this.http.put<ApiResponse<Range>>(
+    this.baseUrl + "ranges/" + id + "/activate", {},
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
+deactivateRange(id: number): Observable<ApiResponse<Range>> {
+  return this.http.put<ApiResponse<Range>>(
+    this.baseUrl + "ranges/" + id + "/deactivate", {},
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
+
 GetRangeDropdown(): Observable<ApiResponse<any>> {
   return this.http.get<ApiResponse<any>>(
     this.baseUrl + "ranges/status/active",

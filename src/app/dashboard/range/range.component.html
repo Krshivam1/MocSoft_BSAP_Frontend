@@ -28,14 +28,20 @@
         type="text" 
         id="search"
         [(ngModel)]="searchTerm" 
-        (input)="onSearch()" 
+        (keyup.enter)="onSearch()" 
         placeholder="Search ranges..."
       />
+      <button (click)="onSearch()" class="search-btn">Search</button>
     </div>
   </div>
 
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="loading-indicator">
+    Loading ranges...
+  </div>
+
   <!-- Table -->
-  <div class="table-container">
+  <div class="table-container" *ngIf="!isLoading">
     <table class="data-table">
       <thead>
         <tr>
@@ -78,7 +84,7 @@
       <tbody>
         <tr *ngFor="let range of paginatedRanges; trackBy: trackByRangeId">
           <td>{{ range.id }}</td>
-          <td>{{ range.stateName }}</td>
+          <td>{{ getStateName(range) }}</td>
           <td>{{ range.rangeName }}</td>
           <td>{{ range.rangeHead }}</td>
           <td>{{ range.rangeContactNo }}</td>
@@ -96,13 +102,14 @@
                 class="deactivate-btn" 
                 [class.activate]="!range.active"
                 (click)="toggleRangeStatus(range)"
+                [disabled]="isLoading"
               >
                 {{ range.active ? 'Deactivate' : 'Activate' }}
               </button>
             </div>
           </td>
         </tr>
-        <tr *ngIf="paginatedRanges.length === 0">
+        <tr *ngIf="paginatedRanges.length === 0 && !isLoading">
           <td colspan="9" class="no-data">No ranges found</td>
         </tr>
       </tbody>
@@ -110,7 +117,7 @@
   </div>
 
   <!-- Pagination -->
-  <div class="pagination-container">
+  <div class="pagination-container" *ngIf="totalPages > 0 && !isLoading">
     <div class="pagination-info">
       Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
       {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} entries
@@ -129,9 +136,11 @@
         *ngFor="let page of getVisiblePages()" 
         class="page-btn" 
         [class.active]="page === currentPage"
-        (click)="goToPage(page)"
+        [class.ellipsis]="page === -1"
+        (click)="page !== -1 && goToPage(page)"
+        [disabled]="page === -1"
       >
-        {{ page }}
+        {{ page === -1 ? '...' : page }}
       </button>
       
       <button 
@@ -144,114 +153,103 @@
     </div>
   </div>
 </div>
- 
+
 <!-- Range Modal -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
   <div class="modal-dialog" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title">{{ isEditMode ? 'Edit Range' : 'Add Range' }}</h4>
-        <button type="button" class="close-btn" (click)="closeModal()">
+        <button type="button" class="close-btn" (click)="closeModal()" [disabled]="isLoading">
           <span>&times;</span>
         </button>
       </div>
       
       <div class="modal-body">
         <form (ngSubmit)="isEditMode ? updateRange() : addRange()" #rangeForm="ngForm">
-      <div class="form-group">
-        <label for="stateName" class="required">State Name</label>
-        <input 
-          type="text" 
-          id="stateName" 
-          name="stateName" 
-          [(ngModel)]="currentRange.stateName" 
-          #stateName="ngModel"
-          required 
-          class="form-control"
-          [class.error]="stateName.touched && stateName.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="stateName.touched && stateName.errors?.['required']">
-          State name is required
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="rangeName" class="required">Range Name</label>
+            <input 
+              type="text" 
+              id="rangeName" 
+              name="rangeName" 
+              [(ngModel)]="currentRange.rangeName" 
+              #rangeName="ngModel"
+              required 
+              class="form-control"
+              [class.error]="rangeName.touched && rangeName.errors?.['required']"
+              [disabled]="isLoading"
+            />
+            <div class="error-message" *ngIf="rangeName.touched && rangeName.errors?.['required']">
+              Range name is required
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="rangeName" class="required">Range Name</label>
-        <input 
-          type="text" 
-          id="rangeName" 
-          name="rangeName" 
-          [(ngModel)]="currentRange.rangeName" 
-          #rangeName="ngModel"
-          required 
-          class="form-control"
-          [class.error]="rangeName.touched && rangeName.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="rangeName.touched && rangeName.errors?.['required']">
-          Range name is required
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="rangeHead" class="required">Range Head</label>
+            <input 
+              type="text" 
+              id="rangeHead" 
+              name="rangeHead" 
+              [(ngModel)]="currentRange.rangeHead" 
+              #rangeHead="ngModel"
+              required 
+              class="form-control"
+              [class.error]="rangeHead.touched && rangeHead.errors?.['required']"
+              [disabled]="isLoading"
+            />
+            <div class="error-message" *ngIf="rangeHead.touched && rangeHead.errors?.['required']">
+              Range head is required
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label for="rangeHead" class="required">Range Head</label>
-        <input 
-          type="text" 
-          id="rangeHead" 
-          name="rangeHead" 
-          [(ngModel)]="currentRange.rangeHead" 
-          #rangeHead="ngModel"
-          required 
-          class="form-control"
-          [class.error]="rangeHead.touched && rangeHead.errors?.['required']"
-        />
-        <div class="error-message" *ngIf="rangeHead.touched && rangeHead.errors?.['required']">
-          Range head is required
-        </div>
-      </div>
+          <div class="form-group">
+            <label for="rangeEmail">Email</label>
+            <input 
+              type="email" 
+              id="rangeEmail" 
+              name="rangeEmail" 
+              [(ngModel)]="currentRange.rangeEmail" 
+              class="form-control"
+              [disabled]="isLoading"
+            />
+          </div>
 
-      <div class="form-group">
-        <label for="rangeEmail">Email</label>
-        <input 
-          type="email" 
-          id="rangeEmail" 
-          name="rangeEmail" 
-          [(ngModel)]="currentRange.rangeEmail" 
-          class="form-control"
-        />
-      </div>
+          <div class="form-group">
+            <label for="rangeContactNo">Contact Number</label>
+            <input 
+              type="text" 
+              id="rangeContactNo" 
+              name="rangeContactNo" 
+              [(ngModel)]="currentRange.rangeContactNo" 
+              class="form-control"
+              [disabled]="isLoading"
+            />
+          </div>
 
-      <div class="form-group">
-        <label for="rangeContactNo">Contact Number</label>
-        <input 
-          type="text" 
-          id="rangeContactNo" 
-          name="rangeContactNo" 
-          [(ngModel)]="currentRange.rangeContactNo" 
-          class="form-control"
-        />
-      </div>
+          <div class="form-group">
+            <label for="rangeMobileNo">Mobile Number</label>
+            <input 
+              type="text" 
+              id="rangeMobileNo" 
+              name="rangeMobileNo" 
+              [(ngModel)]="currentRange.rangeMobileNo" 
+              class="form-control"
+              [disabled]="isLoading"
+            />
+          </div>
 
-      <div class="form-group">
-        <label for="rangeMobileNo">Mobile Number</label>
-        <input 
-          type="text" 
-          id="rangeMobileNo" 
-          name="rangeMobileNo" 
-          [(ngModel)]="currentRange.rangeMobileNo" 
-          class="form-control"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="rangeDescription">Description</label>
-        <textarea 
-          id="rangeDescription" 
-          name="rangeDescription" 
-          [(ngModel)]="currentRange.rangeDescription" 
-          class="form-control" 
-          rows="3"
-        ></textarea>
-      </div>
+          <div class="form-group">
+            <label for="rangeDescription">Description</label>
+            <textarea 
+              id="rangeDescription" 
+              name="rangeDescription" 
+              [(ngModel)]="currentRange.rangeDescription" 
+              class="form-control" 
+              rows="3"
+              [disabled]="isLoading"
+            ></textarea>
+          </div>
 
           <div class="form-group">
             <div class="checkbox-group">
@@ -260,6 +258,7 @@
                   type="checkbox" 
                   name="rangeActive" 
                   [(ngModel)]="currentRange.active"
+                  [disabled]="isLoading"
                 />
                 <span class="checkmark">Active</span>
               </label>
@@ -267,7 +266,7 @@
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="cancel-btn" (click)="closeModal()">
+            <button type="button" class="cancel-btn" (click)="closeModal()" [disabled]="isLoading">
               Close
             </button>
             <button 

@@ -1,11 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ApiService, ApiResponse } from '../../services/api.service';
 
-interface Range {
+interface LocalRange {
   id: number;
-  stateName: string;
+  stateId: number;
   rangeName: string;
   rangeHead: string;
   rangeContactNo: string;
@@ -15,209 +13,178 @@ interface Range {
   rangeImage?: string;
   rangePersonImage?: string;
   active: boolean;
-  stateId: number;
+  createdBy?: number;
+  updatedBy?: number;
+  created_date?: string;
+  updated_date?: string;
+  state: {
+    id: number;
+    stateName: string;
+  };
 }
 
 @Component({
   selector: 'app-range',
   templateUrl: './range.component.html',
-  styleUrls: ['./range.component.css'],
+  styleUrls: ['./range.component.css']
 })
 export class RangeComponent implements OnInit {
   // Data properties
-  ranges: Range[] = [];
-  filteredRanges: Range[] = [];
-  paginatedRanges: Range[] = [];
+  ranges: LocalRange[] = [];
+  filteredRanges: LocalRange[] = [];
+  paginatedRanges: LocalRange[] = [];
   
-  // State management
-  isLoading: boolean = false;
+  // Modal properties
+  showModal = false;
+  currentRange: LocalRange = this.createEmptyRange();
+  isEditMode = false;
+  isLoading = false;
   
-  // Search and filter
-  searchTerm: string = '';
+  // Search and pagination properties
+  searchTerm = '';
+  currentPage = 1;
+  itemsPerPage = 10;
+  pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
   
-  // Pagination
-  currentPage: number = 1;
-  itemsPerPage: number = 10;
-  pageSize: number = 10;
-  totalPages: number = 0;
-  totalItems: number = 0;
-  
-  // Sorting
-  sortColumn: string = '';
+  // Sorting properties
+  sortColumn = '';
   sortDirection: 'asc' | 'desc' = 'asc';
-  
-  // Modal states
-  showModal: boolean = false;
-  isEditMode: boolean = false;
-  
-  // Current data
-  currentRange: Range = this.createEmptyRange();
   
   // Math reference for template
   Math = Math;
 
-  // Mock data
-  private mockRanges: Range[] = [
-    {
-      id: 1,
-      stateName: 'Maharashtra',
-      rangeName: 'Mumbai Range',
-      rangeHead: 'John Doe',
-      rangeContactNo: '0221234567',
-      rangeMobileNo: '9876543210',
-      rangeEmail: 'mumbai.range@example.com',
-      rangeDescription: 'Mumbai metropolitan area range',
-      active: true,
-      stateId: 1
-    },
-    {
-      id: 2,
-      stateName: 'Karnataka',
-      rangeName: 'Bangalore Range',
-      rangeHead: 'Jane Smith',
-      rangeContactNo: '0802345678',
-      rangeMobileNo: '8765432109',
-      rangeEmail: 'bangalore.range@example.com',
-      rangeDescription: 'Bangalore urban area range',
-      active: true,
-      stateId: 2
-    },
-    {
-      id: 3,
-      stateName: 'Tamil Nadu',
-      rangeName: 'Chennai Range',
-      rangeHead: 'Robert Johnson',
-      rangeContactNo: '0443456789',
-      rangeMobileNo: '7654321098',
-      rangeEmail: 'chennai.range@example.com',
-      rangeDescription: 'Chennai coastal area range',
-      active: false,
-      stateId: 3
-    },
-    {
-      id: 4,
-      stateName: 'Gujarat',
-      rangeName: 'Ahmedabad Range',
-      rangeHead: 'Michael Brown',
-      rangeContactNo: '0792345678',
-      rangeMobileNo: '9543210876',
-      rangeEmail: 'ahmedabad.range@example.com',
-      rangeDescription: 'Ahmedabad industrial area range',
-      active: true,
-      stateId: 4
-    },
-    {
-      id: 5,
-      stateName: 'Rajasthan',
-      rangeName: 'Jaipur Range',
-      rangeHead: 'Sarah Wilson',
-      rangeContactNo: '0141234567',
-      rangeMobileNo: '8432109765',
-      rangeEmail: 'jaipur.range@example.com',
-      rangeDescription: 'Jaipur heritage area range',
-      active: false,
-      stateId: 5
-    }
-  ];
+  constructor(private apiService: ApiService) {}
 
-  constructor(private router: Router) {}
-
-  ngOnInit(): void {
+  ngOnInit() {
     this.loadRanges();
   }
 
-  // Data loading
-  loadRanges(): void {
+  private loadRanges() {
     this.isLoading = true;
-    // Simulate API call delay
-    setTimeout(() => {
-      this.ranges = [...this.mockRanges];
-      this.applyFilters();
-      this.isLoading = false;
-    }, 500);
+    this.apiService.getRanges(
+      this.currentPage, 
+      this.itemsPerPage,
+      this.searchTerm,
+      this.getSortByField(),
+      this.sortDirection
+    ).subscribe({
+      next: (response: ApiResponse<any[]>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.ranges = response.data as LocalRange[] || [];
+          this.totalItems = response.pagination?.total || 0;
+          this.totalPages = response.pagination?.totalPages || 0;
+          this.updateFilteredData();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error loading ranges:', error);
+        // Handle error - show message to user
+      }
+    });
   }
 
-  // Helper methods
-  createEmptyRange(): Range {
+  private createEmptyRange(): LocalRange {
     return {
       id: 0,
-      stateName: '',
+      stateId: 4, // Default stateId (will be overridden for edit mode)
       rangeName: '',
       rangeHead: '',
       rangeContactNo: '',
       rangeMobileNo: '',
       rangeEmail: '',
       rangeDescription: '',
+      rangeImage: '',
+      rangePersonImage: '',
       active: true,
-      stateId: 0
+      state: {
+        id: 0,
+        stateName: ''
+      }
     };
   }
 
-  // Search and filter
-  onSearch(): void {
-    this.applyFilters();
+  // Get state name from state object
+  getStateName(range: LocalRange): string {
+    return range.state?.stateName || '';
   }
 
-  onPageSizeChange(): void {
+  // Search functionality
+  onSearch() {
+    this.currentPage = 1;
+    this.loadRanges(); // Reload from API with search
+  }
+
+  private updateFilteredData() {
+    // For client-side filtering (if needed)
+    this.filteredRanges = [...this.ranges];
+    this.updatePaginatedData();
+  }
+
+  // Pagination functionality
+  private updatePaginatedData() {
+    this.paginatedRanges = [...this.ranges]; // Already paginated from API
+  }
+
+  onPageSizeChange() {
     this.itemsPerPage = this.pageSize;
     this.currentPage = 1;
-    this.updatePaginatedData();
+    this.loadRanges(); // Reload from API with new page size
   }
 
-  applyFilters(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredRanges = [...this.ranges];
-    } else {
-      const term = this.searchTerm.toLowerCase().trim();
-      this.filteredRanges = this.ranges.filter(range =>
-        range.rangeName.toLowerCase().includes(term) ||
-        range.stateName.toLowerCase().includes(term) ||
-        range.rangeHead.toLowerCase().includes(term) ||
-        range.rangeEmail.toLowerCase().includes(term) ||
-        range.rangeContactNo.includes(term) ||
-        range.rangeMobileNo.includes(term)
-      );
-    }
-    this.currentPage = 1;
-    this.updatePaginatedData();
-  }
-
-  // Pagination methods
-  updatePaginatedData(): void {
-    this.totalItems = this.filteredRanges.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = Math.min(startIndex + this.itemsPerPage, this.totalItems);
-    this.paginatedRanges = this.filteredRanges.slice(startIndex, endIndex);
-  }
-
-  goToPage(page: number): void {
+  goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
-      this.updatePaginatedData();
+      this.loadRanges(); // Reload from API for the new page
     }
   }
 
   getVisiblePages(): number[] {
-    const pages: number[] = [];
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
+    const visiblePages: number[] = [];
+    const maxVisiblePages = 5;
     
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    if (this.totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= this.totalPages; i++) {
+        visiblePages.push(i);
+      }
+    } else {
+      const halfVisible = Math.floor(maxVisiblePages / 2);
+      let startPage = Math.max(1, this.currentPage - halfVisible);
+      let endPage = Math.min(this.totalPages, this.currentPage + halfVisible);
+      
+      if (this.currentPage <= halfVisible) {
+        endPage = maxVisiblePages;
+      } else if (this.currentPage > this.totalPages - halfVisible) {
+        startPage = this.totalPages - maxVisiblePages + 1;
+      }
+      
+      if (startPage > 1) {
+        visiblePages.push(1);
+        if (startPage > 2) {
+          visiblePages.push(-1); // Ellipsis
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        visiblePages.push(i);
+      }
+      
+      if (endPage < this.totalPages) {
+        if (endPage < this.totalPages - 1) {
+          visiblePages.push(-1); // Ellipsis
+        }
+        visiblePages.push(this.totalPages);
+      }
     }
     
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
+    return visiblePages;
   }
 
-
-
   // Sorting functionality
-  sortTable(column: string): void {
+  sortTable(column: string) {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -225,29 +192,20 @@ export class RangeComponent implements OnInit {
       this.sortDirection = 'asc';
     }
 
-    this.filteredRanges.sort((a, b) => {
-      let aValue = a[column as keyof Range];
-      let bValue = b[column as keyof Range];
+    // Reload from API with new sorting
+    this.loadRanges();
+  }
 
-      // Provide default values if undefined
-      if (aValue === undefined || aValue === null) aValue = '';
-      if (bValue === undefined || bValue === null) bValue = '';
-
-      // Handle different data types
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = (bValue as string).toLowerCase();
-      }
-
-      if (aValue < bValue) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      } else if (aValue > bValue) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    this.updatePaginatedData();
+  private getSortByField(): string {
+    // Map UI column names to API field names
+    const fieldMap: { [key: string]: string } = {
+      'id': 'id',
+      'stateName': 'stateName',
+      'rangeName': 'rangeName',
+      'rangeHead': 'rangeHead',
+      'active': 'active'
+    };
+    return fieldMap[this.sortColumn] || 'id';
   }
 
   // Modal functionality
@@ -263,58 +221,121 @@ export class RangeComponent implements OnInit {
     this.isEditMode = false;
   }
 
-  editRange(range: Range): void {
+  editRange(range: LocalRange): void {
     this.isEditMode = true;
     this.currentRange = { ...range };
     this.showModal = true;
   }
 
-  toggleRangeStatus(range: Range): void {
-    const index = this.ranges.findIndex(r => r.id === range.id);
-    if (index !== -1) {
-      this.ranges[index].active = !this.ranges[index].active;
-      this.applyFilters();
-      // TODO: Implement actual API call
-      console.log('Range status toggled:', this.ranges[index]);
-    }
+  toggleRangeStatus(range: LocalRange): void {
+    if (!confirm('Are you sure you want to change the status of this range?')) return;
+    
+    this.isLoading = true;
+    
+    const apiCall = range.active
+      ? this.apiService.deactivateRange(range.id)
+      : this.apiService.activateRange(range.id);
+
+    apiCall.subscribe({
+      next: (response: ApiResponse<any>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS') {
+          this.loadRanges(); // Reload to get fresh data
+        }
+      },
+      error: (error: any) => {
+        this.isLoading = false;
+        console.error('Error toggling range status:', error);
+      }
+    });
   }
 
   addRange(): void {
+    if (this.isLoading) return;
+    
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const newId = this.getNextId();
-      this.currentRange.id = newId;
-      this.currentRange.active = this.currentRange.active || false;
-      this.ranges.unshift({ ...this.currentRange });
-      this.applyFilters();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
+    
+    // Only send the fields required by the backend for creation
+    // stateId is hardcoded in the background for new ranges
+    const rangeData = {
+      stateId: 4, // Hardcoded stateId for new ranges
+      rangeName: this.currentRange.rangeName,
+      rangeHead: this.currentRange.rangeHead,
+      rangeContactNo: this.currentRange.rangeContactNo,
+      rangeMobileNo: this.currentRange.rangeMobileNo,
+      rangeEmail: this.currentRange.rangeEmail,
+      rangeDescription: this.currentRange.rangeDescription,
+      rangeImage: this.currentRange.rangeImage || '',
+      rangePersonImage: this.currentRange.rangePersonImage || ''
+    };
+    
+    console.log('Creating range with data:', rangeData);
+    
+    this.apiService.createRange(rangeData).subscribe({
+      next: (response: ApiResponse<any>) => {
+        this.isLoading = false;
+        console.log('Create response:', response);
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadRanges(); // Reload to get the latest data
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error creating range:', error);
+        // Handle error - show message to user
+      }
+    });
   }
 
   updateRange(): void {
+    if (this.isLoading) return;
+    
+    if (!this.currentRange.id) {
+      console.error('Cannot update range: ID is missing');
+      return;
+    }
+    
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      const index = this.ranges.findIndex(r => r.id === this.currentRange.id);
-      if (index !== -1) {
-        this.ranges[index] = { ...this.currentRange };
+    
+    // Only send the fields that can be updated 
+    // stateId is passed in background from existing range data
+    const rangeData = {
+      stateId: this.currentRange.stateId, // stateId from existing range (background)
+      rangeName: this.currentRange.rangeName,
+      rangeHead: this.currentRange.rangeHead,
+      rangeContactNo: this.currentRange.rangeContactNo,
+      rangeMobileNo: this.currentRange.rangeMobileNo,
+      rangeEmail: this.currentRange.rangeEmail,
+      rangeDescription: this.currentRange.rangeDescription,
+      rangeImage: this.currentRange.rangeImage || '',
+      rangePersonImage: this.currentRange.rangePersonImage || ''
+    };
+    
+    console.log('Updating range with data:', {
+      id: this.currentRange.id,
+      data: rangeData
+    });
+    
+    this.apiService.updateRange(this.currentRange.id, rangeData).subscribe({
+      next: (response: ApiResponse<any>) => {
+        this.isLoading = false;
+        console.log('Update response:', response);
+        if (response.status === 'SUCCESS') {
+          this.closeModal();
+          this.loadRanges(); // Reload to get the latest data
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error updating range:', error);
+        // Handle error - show message to user
       }
-      this.applyFilters();
-      this.isLoading = false;
-      this.closeModal();
-    }, 500);
-  }
-
-  private getNextId(): number {
-    return this.ranges.length > 0 ? Math.max(...this.ranges.map(r => r.id)) + 1 : 1;
+    });
   }
 
   // TrackBy function for performance
-  trackByRangeId(index: number, range: Range): number {
+  trackByRangeId(index: number, range: LocalRange): number {
     return range.id;
   }
-
-
 }
