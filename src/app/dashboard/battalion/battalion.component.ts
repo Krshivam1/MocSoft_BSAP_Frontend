@@ -118,14 +118,33 @@ export class BattalionComponent implements OnInit {
 
   private loadBattalions() {
     this.isLoading = true;
-    this.apiService.getBattalions(this.currentPage, this.itemsPerPage).subscribe({
+    this.apiService.getBattalions(this.currentPage, this.itemsPerPage, this.sortDirection === 'asc' ? 'ASC' : 'DESC').subscribe({
       next: (response: ApiResponse<Battalion[]>) => {
         if (response.status === 'SUCCESS' && response.data) {
           this.battalions = response.data;
+          // Use server pagination values when available
           if (response.pagination) {
-            this.totalItems = response.pagination.total || 0;
-            this.totalPages = response.pagination.totalPages || 0;
+            // API returns { currentPage, totalPages, totalItems, itemsPerPage }
+            // Map them into component state
+            // Some APIs may use different keys; prefer explicit fields if present
+            // set current page and page size from server
+            // defensive access in case fields are missing
+            // Update local pagination state from server
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            this.currentPage = response.pagination.currentPage || this.currentPage;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            this.totalPages = response.pagination.totalPages || this.totalPages;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            this.totalItems = response.pagination.totalItems || this.totalItems;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            this.itemsPerPage = response.pagination.itemsPerPage || this.itemsPerPage;
           }
+          // When using server pagination the API already returns the current page of items
+          // so filteredBattalions and paginatedBattalions should reflect that page.
           this.updateFilteredData();
         }
         this.isLoading = false;
@@ -163,24 +182,23 @@ export class BattalionComponent implements OnInit {
   }
 
   private updateFilteredData() {
-    // Apply search filter
-    this.filteredBattalions = this.battalions.filter(b =>
-      b.battalionName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (b.range?.rangeName || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (b.battalionHead || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (b.battalionEmail || '').toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (b.battalionArea || '').toLowerCase().includes(this.searchTerm.toLowerCase())
-    );
-
-    this.totalItems = this.filteredBattalions.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    
-    // Ensure current page is valid
-    if (this.currentPage > this.totalPages && this.totalPages > 0) {
-      this.currentPage = this.totalPages;
+    // Apply optional client-side search on the current page of data
+    if (this.searchTerm && this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      this.filteredBattalions = this.battalions.filter(b =>
+        b.battalionName.toLowerCase().includes(term) ||
+        (b.range?.rangeName || '').toLowerCase().includes(term) ||
+        (b.battalionHead || '').toLowerCase().includes(term) ||
+        (b.battalionEmail || '').toLowerCase().includes(term) ||
+        (b.battalionArea || '').toLowerCase().includes(term)
+      );
+      // When searching locally on current page, show filtered results only
+      this.paginatedBattalions = this.filteredBattalions;
+    } else {
+      // No local search — show the server-provided page
+      this.filteredBattalions = this.battalions;
+      this.paginatedBattalions = this.battalions;
     }
-    
-    this.updatePaginatedData();
   }
 
   // Pagination functionality
@@ -193,13 +211,14 @@ export class BattalionComponent implements OnInit {
   onPageSizeChange() {
     this.itemsPerPage = this.pageSize;
     this.currentPage = 1;
-    this.updateFilteredData();
+    // Reload page 1 with new page size from server
+    this.loadBattalions();
   }
 
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
-      this.updatePaginatedData();
+      this.loadBattalions();
     }
   }
 
@@ -253,6 +272,8 @@ export class BattalionComponent implements OnInit {
       this.sortDirection = 'asc';
     }
 
+    // For server-side pagination, request the server to sort (API supports sortOrder only)
+    // We still do a local sort for the current page to give immediate feedback
     this.filteredBattalions.sort((a: any, b: any) => {
       let aValue = a[column as keyof Battalion];
       let bValue = b[column as keyof Battalion];
@@ -276,6 +297,8 @@ export class BattalionComponent implements OnInit {
     });
 
     this.updatePaginatedData();
+    // Refresh server-side page with updated sort order
+    this.loadBattalions();
   }
 
   // Modal functionality

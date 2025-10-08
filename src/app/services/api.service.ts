@@ -140,6 +140,7 @@ export interface User {
   districtId?: number;
   roleId: number;
   password: string;
+  battalionId?: number;
   token?: string;
   tokenValidity?: string;
   verified: boolean;
@@ -161,6 +162,7 @@ export interface User {
   role?: Role;
   district?: Districts;
   range?: Range;
+  battalion?: Battalion;
 }
 
 export interface Range {

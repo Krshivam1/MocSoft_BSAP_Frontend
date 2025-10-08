@@ -79,7 +79,7 @@
           </th>
           <th>State</th>
           <th>Range</th>
-          <th>District</th>
+          <th>Battalion</th>
           <th (click)="sortTable('active')" class="sortable">
             Active
             <span class="sort-icon" [class.active]="sortColumn === 'active'">
@@ -100,7 +100,7 @@
           <td>{{ user.mobileNo }}</td>
           <td>{{ getStateName(user.stateId) }}</td>
           <td>{{ getRangeName(user.rangeId) }}</td>
-          <td>{{ getDistrictName(user.districtId) }}</td>
+          <td>{{ user.battalion?.battalionName || getBattalionName(user.battalionId) }}</td>
           <td>
             <span class="status-badge" [class.active]="user.active" [class.inactive]="!user.active">
               {{ user.active ? 'YES' : 'NO' }}
@@ -184,11 +184,15 @@
                 [(ngModel)]="currentUser.firstName" 
                 #firstName="ngModel"
                 required 
+                pattern="^[A-Za-z\s]+$"
                 class="form-control"
-                [class.error]="firstName.touched && firstName.errors?.['required']"
+                [class.error]="firstName.touched && (firstName.errors?.['required'] || firstName.errors?.['pattern'])"
               />
               <div class="error-message" *ngIf="firstName.touched && firstName.errors?.['required']">
                 First name is required
+              </div>
+              <div class="error-message" *ngIf="firstName.touched && firstName.errors?.['pattern']">
+                First name must contain only letters and spaces
               </div>
             </div>
 
@@ -201,11 +205,15 @@
                 [(ngModel)]="currentUser.lastName" 
                 #lastName="ngModel"
                 required 
+                pattern="^[A-Za-z\s]+$"
                 class="form-control"
-                [class.error]="lastName.touched && lastName.errors?.['required']"
+                [class.error]="lastName.touched && (lastName.errors?.['required'] || lastName.errors?.['pattern'])"
               />
               <div class="error-message" *ngIf="lastName.touched && lastName.errors?.['required']">
                 Last name is required
+              </div>
+              <div class="error-message" *ngIf="lastName.touched && lastName.errors?.['pattern']">
+                Last name must contain only letters and spaces
               </div>
             </div>
           </div>
@@ -240,11 +248,16 @@
               [(ngModel)]="currentUser.mobileNo" 
               #mobileNo="ngModel"
               required 
+              pattern="[0-9]{10}"
+              maxlength="10"
               class="form-control"
-              [class.error]="mobileNo.touched && mobileNo.errors?.['required']"
+              [class.error]="mobileNo.touched && (mobileNo.errors?.['required'] || mobileNo.errors?.['pattern'])"
             />
             <div class="error-message" *ngIf="mobileNo.touched && mobileNo.errors?.['required']">
               Mobile number is required
+            </div>
+            <div class="error-message" *ngIf="mobileNo.touched && mobileNo.errors?.['pattern']">
+              Mobile number must be 10 digits
             </div>
           </div>
 
@@ -255,8 +268,12 @@
               id="contactNo" 
               name="contactNo" 
               [(ngModel)]="currentUser.contactNo" 
+              pattern="[0-9]{7,13}"
               class="form-control"
             />
+            <div class="error-message" *ngIf="currentUser.contactNo && !currentUser.contactNo.match('^[0-9]{7,13}$')">
+              Contact number must be 7 to 13 digits
+            </div>
           </div>
 
           <div class="form-group">
@@ -286,6 +303,7 @@
                 name="state" 
                 [(ngModel)]="currentUser.stateId" 
                 class="form-control"
+                (change)="onStateChange(currentUser.stateId)"
               >
                 <option value="">Select State</option>
                 <option *ngFor="let state of states" [value]="state.id">{{ state.stateName }}</option>
@@ -298,7 +316,7 @@
                 id="range" 
                 name="range" 
                 [(ngModel)]="currentUser.rangeId" 
-                (change)="onRangeChange(currentUser.rangeId)"
+                (change)="onRangeChange(currentUser.rangeId ?? 0)"
                 class="form-control"
               >
                 <option value="">Select Range</option>
@@ -307,7 +325,7 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label for="district">District</label>
             <select 
               id="district" 
@@ -315,12 +333,13 @@
               [(ngModel)]="currentUser.districtId" 
               class="form-control"
               [disabled]="!currentUser.rangeId"
+              (change)="onDistrictChange(currentUser.districtId)"
             >
               <option value="">Select District</option>
               <option *ngFor="let district of districts" [value]="district.id">{{ district.districtName }}</option>
             </select>
             <div class="help-text" *ngIf="!currentUser.rangeId">Please select a range first</div>
-          </div>
+          </div> -->
 
           <div *ngIf="!isEditMode" class="form-group">
             <label for="password" class="required">Password</label>
@@ -331,12 +350,39 @@
               [(ngModel)]="currentUser.password" 
               #password="ngModel"
               [required]="!isEditMode"
+              pattern="(?=.{8,})(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).*"
               class="form-control"
-              [class.error]="password.touched && password.errors?.['required']"
+              [class.error]="password.touched && (password.errors?.['required'] || password.errors?.['pattern'])"
             />
             <div class="error-message" *ngIf="password.touched && password.errors?.['required']">
               Password is required
             </div>
+            <div class="error-message" *ngIf="password.touched && password.errors?.['pattern']">
+              Password must be min 8 chars, include uppercase, lowercase and a digit
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="joiningDate" class="required">Joining Date</label>
+            <input type="date" id="joiningDate" name="joiningDate" [(ngModel)]="currentUser.joiningDate" required class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="endDate">End Date</label>
+            <input type="date" id="endDate" name="endDate" [(ngModel)]="currentUser.endDate" disabled class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="userImage">User Image</label>
+            <input type="file" id="userImage" name="userImage" accept="image/png, image/jpeg, image/jpg" (change)="onUserImageSelected($event)" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="battalion">Battalion</label>
+            <select id="battalion" name="battalion" [(ngModel)]="currentUser.battalionId" class="form-control">
+              <option value="">Select Battalion</option>
+              <option *ngFor="let b of battalions" [value]="b.id">{{ b.battalionName }}</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -359,7 +405,7 @@
             <button 
               type="submit" 
               class="save-btn" 
-              [disabled]="userForm.invalid || isLoading"
+             
             >
               <span *ngIf="isLoading" class="spinner"></span>
               {{ isEditMode ? 'Update' : 'Save' }}

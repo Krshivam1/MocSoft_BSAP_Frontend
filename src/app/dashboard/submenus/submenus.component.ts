@@ -9,6 +9,11 @@ interface SubMenu {
   parentId?: number;
   subMenuName: string;
   subMenuUrl: string;
+  // server fields
+  subMenuId?: number;
+  menuName?: string;
+  menuUrl?: string;
+  parentMenu?: string;
   priority: number;
   active: boolean;
   createdBy?: number;
@@ -54,34 +59,57 @@ export class SubmenusComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.loadMenus();
     this.loadSubMenus();
   }
-
-  // Load menus for dropdown
-  loadMenus(): void {
-    this.apiService.getMenus(1, 100).subscribe({
-      next: (res: ApiResponse<Menu[]>) => {
-        this.menus = res.data || [];
-      },
-      error: err => {
-        this.menus = [];
-      }
-    });
-  }
-
-  // Load submenus
+  // Load submenus from server with pagination, search and sort
   loadSubMenus(): void {
+    this.isLoading = true;
     this.apiService.getSubMenus(this.currentPage, this.pageSize, this.searchTerm, this.sortColumn, this.sortDirection).subscribe({
       next: (res: ApiResponse<SubMenu[]>) => {
+        this.isLoading = false;
         this.submenus = res.data || [];
-        this.filteredData = [...this.submenus];
-        this.updatePagination();
+
+        // derive unique menus (menuId + parentMenu) for the modal dropdown
+        const menuMap = new Map<number, string>();
+        for (const s of this.submenus) {
+          if (s.menuId && s.parentMenu) {
+            if (!menuMap.has(s.menuId)) {
+              menuMap.set(s.menuId, s.parentMenu);
+            }
+          }
+        }
+        this.menus = Array.from(menuMap.entries()).map(([id, name]) => ({ id, menuName: name } as Menu));
+
+        // map server pagination to component state
+        const pagination = (res as any).pagination || (res as any).data?.pagination;
+        if ((res as any).pagination) {
+          this.totalItems = (res as any).pagination.total || 0;
+          this.currentPage = (res as any).pagination.page || this.currentPage;
+          this.itemsPerPage = (res as any).pagination.limit || this.pageSize;
+          this.totalPages = (res as any).pagination.totalPages || Math.ceil(this.totalItems / this.itemsPerPage);
+        } else if ((res as any).data && (res as any).data.pagination) {
+          const p = (res as any).data.pagination;
+          this.totalItems = p.total || 0;
+          this.currentPage = p.page || this.currentPage;
+          this.itemsPerPage = p.limit || this.pageSize;
+          this.totalPages = p.totalPages || Math.ceil(this.totalItems / this.itemsPerPage);
+        } else {
+          // fallback to client-side pagination if server didn't provide it
+          this.totalItems = this.submenus.length;
+          this.itemsPerPage = this.pageSize;
+          this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+        }
+
+        // paginatedData reflects current page slice from server-provided list
+        this.paginatedData = this.submenus.slice(0, this.itemsPerPage);
       },
       error: err => {
+        this.isLoading = false;
         this.submenus = [];
-        this.filteredData = [];
-        this.updatePagination();
+        this.menus = [];
+        this.paginatedData = [];
+        this.totalItems = 0;
+        this.totalPages = 0;
       }
     });
   }
@@ -110,26 +138,16 @@ export class SubmenusComponent implements OnInit {
   }
 
   applyFilters(): void {
-    let filtered = [...this.submenus];
-
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(submenu =>
-        submenu.subMenuName.toLowerCase().includes(term) ||
-        submenu.subMenuUrl.toLowerCase().includes(term) ||
-        this.getMenuName(submenu.menuId).toLowerCase().includes(term) ||
-        submenu.priority.toString().includes(term)
-      );
-    }
-
-    this.filteredData = filtered;
-    this.updatePagination();
+    // client-side filtering is no longer used; trigger server reload instead
+    this.currentPage = 1;
+    this.loadSubMenus();
   }
 
   // Pagination methods
   onPageSizeChange(): void {
     this.currentPage = 1;
-    this.updatePagination();
+    this.itemsPerPage = this.pageSize;
+    this.loadSubMenus();
   }
 
   updatePagination(): void {
@@ -142,7 +160,7 @@ export class SubmenusComponent implements OnInit {
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
-      this.updatePagination();
+      this.loadSubMenus();
     }
   }
 
@@ -154,36 +172,9 @@ export class SubmenusComponent implements OnInit {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
-
-    this.filteredData.sort((a, b) => {
-      let aValue: any = a[column as keyof SubMenu];
-      let bValue: any = b[column as keyof SubMenu];
-
-      // Special handling for menuId to sort by menu name
-      if (column === 'menuId') {
-        aValue = this.getMenuName(a.menuId);
-        bValue = this.getMenuName(b.menuId);
-      }
-
-      // Provide default values if undefined
-      if (aValue === undefined || aValue === null) aValue = '';
-      if (bValue === undefined || bValue === null) bValue = '';
-
-      // Handle different data types
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = (bValue as string).toLowerCase();
-      }
-
-      if (aValue < bValue) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      } else if (aValue > bValue) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    this.updatePagination();
+    // trigger server-side sort
+    this.currentPage = 1;
+    this.loadSubMenus();
   }
 
   // Modal functionality
@@ -264,10 +255,11 @@ export class SubmenusComponent implements OnInit {
     const delta = 2;
     const range = [];
     const rangeWithDots = [];
+    // Use server-provided totalPages to build pagination window
+    const start = Math.max(2, this.currentPage - delta);
+    const end = Math.min(this.totalPages - 1, this.currentPage + delta);
 
-    for (let i = Math.max(2, this.currentPage - delta); 
-         i <= Math.min(this.totalPages - 1, this.currentPage + delta); 
-         i++) {
+    for (let i = start; i <= end; i++) {
       range.push(i);
     }
 

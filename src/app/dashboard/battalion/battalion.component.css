@@ -29,19 +29,32 @@
   border-collapse: collapse;
 }
 
-/* Prevent email and area from wrapping into adjacent columns */
-.data-table th:nth-child(8),
-.data-table td:nth-child(8) {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 240px; /* cap email cell so it doesn't push other columns too far */
-}
+/* Ensure columns don't bleed into each other
+   Current column order: 1 ID,2 Range,3 District,4 Name,5 Area,6 Head,7 Mobile,8 Contact,9 Email,10 Active,11 Actions */
 
+/* Email column (9) - prevent wrapping and truncate with ellipsis */
 .data-table th:nth-child(9),
 .data-table td:nth-child(9) {
   white-space: nowrap;
-  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px; /* cap email width */
+  vertical-align: middle;
+}
+
+/* Active column (10) - center the status badge and prevent wrapping */
+.data-table th:nth-child(10),
+.data-table td:nth-child(10) {
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+  width: 80px;
+}
+
+/* Actions column (11) - keep enough space for buttons */
+.data-table th:nth-child(11),
+.data-table td:nth-child(11) {
+  min-width: 120px;
 }
 
 .image-preview {
@@ -180,4 +193,21 @@
 
 /* Ensure header has a solid background so sticky header (if any) looks consistent */
 /* Note: header background intentionally set above; no override */
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: #b0e5b8; /* green-ish background for active */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-badge.inactive {
+  background: #f5bdbd;
+}
 

@@ -45,19 +45,23 @@
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th (click)="sortTable('menuId')" class="sortable">
+          <th (click)="sortTable('parentMenu')" class="sortable">
             Menu Name
-            <span class="sort-icon" [class.active]="sortColumn === 'menuId'">
+            <span class="sort-icon" [class.active]="sortColumn === 'parentMenu'">
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
           <th (click)="sortTable('subMenuName')" class="sortable">
             SubMenu Name
-            <span class="sort-icon" [class.active]="sortColumn === 'subMenuName'">
+            <span class="sort-icon" [class.active]="sortColumn === 'menuName'">
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
-          <th>SubMenu Url</th>
+          <th (click)="sortTable('menuUrl')" class="sortable">SubMenu Url
+            <span class="sort-icon" [class.active]="sortColumn === 'menuUrl'">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
           <th (click)="sortTable('priority')" class="sortable">
             Priority
             <span class="sort-icon" [class.active]="sortColumn === 'priority'">
@@ -76,10 +80,10 @@
       <tbody>
         <tr *ngFor="let submenu of paginatedData">
           <td>{{ submenu.id }}</td>
-          <td>{{ getMenuName(submenu.menuId) }}</td>
-          <td>{{ submenu.subMenuName }}</td>
-          <td class="url-cell">{{ submenu.subMenuUrl }}</td>
-          <td>{{ submenu.priority }}</td>
+          <td>{{ submenu.parentMenu || getMenuName(submenu.menuId) }}</td>
+          <td>{{ submenu.menuName || submenu.subMenuName }}</td>
+          <td class="url-cell">{{ submenu.menuUrl || submenu.subMenuUrl }}</td>
+          <td> <span class="priority-badge">{{ submenu.priority }}</span></td>
           <td>
             <span class="status-badge" [class.active]="submenu.active" [class.inactive]="!submenu.active">
               {{ submenu.active ? 'YES' : 'NO' }}
@@ -108,8 +112,8 @@
   <!-- Pagination -->
   <div class="pagination-container">
     <div class="pagination-info">
-      Showing {{ (currentPage - 1) * pageSize + 1 }} to 
-      {{ Math.min(currentPage * pageSize, filteredData.length) }} of {{ filteredData.length }} entries
+      Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to 
+      {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} entries
     </div>
     
     <div class="pagination">

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { ApiService, User, ApiResponse, Role, State, Range } from '../../services/api.service';
+import { ApiService, User, ApiResponse, Role, State, Range, Battalion } from '../../services/api.service';
 import Districts from '../../models/Districts';
 
 @Component({
@@ -32,6 +32,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   states: State[] = [];
   districts: Districts[] = [];
   ranges: Range[] = [];
+  battalions: Battalion[] = [];
 
   private searchSubject = new Subject<string>();
   private searchSubscription?: Subscription;
@@ -44,6 +45,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.setupSearchDebouncing();
     this.loadUsers();
     this.loadDropdownData();
+  
   }
 
   ngOnDestroy() {
@@ -133,6 +135,18 @@ export class UsersComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Load ranges
+    this.apiService.getRanges(1, 100).subscribe({
+      next: (response: ApiResponse<Range[]>) => {
+        if (response.status === 'SUCCESS') {
+          this.ranges = response.data || [];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading ranges:', error);
+      }
+    });
+
     // Uncomment and implement if needed:
     // // Load ranges
     // this.apiService.getRanges().subscribe({
@@ -146,6 +160,20 @@ export class UsersComponent implements OnInit, OnDestroy {
     //   }
     // });
 
+  }
+
+  loadBattalions(rangeId: number): void {
+    this.apiService.getBattalionsByRange(rangeId).subscribe({
+      next: (res) => {
+        this.battalions = res.data || [];
+        },
+        error: (err) => {
+          console.error('Error loading battalions by range:', err);
+          this.battalions = [];
+        }
+      });
+    
+    
   }
 
   // /**
@@ -337,10 +365,53 @@ export class UsersComponent implements OnInit, OnDestroy {
     });
   }
 
-  onRangeChange(rangeId?: number): void {
+  onRangeChange(rangeId: number): void {
     this.currentUser.rangeId = rangeId;
-    this.currentUser.districtId = undefined; 
-    // this.loadDistricts(rangeId);
+    // Optionally load districts for the selected range
+    this.loadBattalions(rangeId);
+    
+  }
+
+  onStateChange(stateId?: number): void {
+    if (stateId) {
+      this.apiService.getRanges(1, 100, '', '', '', stateId).subscribe({
+        next: (res) => {
+          this.ranges = res.data || [];
+        },
+        error: (err) => {
+          console.error('Error loading ranges for state:', err);
+          this.ranges = [];
+        }
+      });
+    } else {
+      this.ranges = [];
+    }
+  }
+
+  // onDistrictChange(districtId?: number): void {
+  //   if (districtId) {
+  //     this.loadBattalions(undefined, districtId);
+  //   } else {
+  //     this.battalions = [];
+  //   }
+  // }
+
+  onUserImageSelected(event: any): void {
+    const file: File = event.target.files && event.target.files[0];
+    if (!file) return;
+    // Simple client-side validation
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      console.error('Invalid file type for user image');
+      return;
+    }
+
+    // Convert to base64 or set to FormData when uploading via API
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.currentUser.userImage = reader.result as string;
+    };
+    reader.readAsDataURL(file);
   }
 
   addUser(): void {
@@ -414,6 +485,12 @@ export class UsersComponent implements OnInit, OnDestroy {
     if (!rangeId) return '-';
     const range = this.ranges.find(r => r.id === rangeId);
     return range ? range.rangeName : 'Unknown';
+  }
+
+  getBattalionName(battalionId?: number): string {
+    if (!battalionId) return '-';
+    const b = this.battalions.find(x => x.id === battalionId);
+    return b ? b.battalionName : 'Unknown';
   }
 
   trackByUserId(index: number, user: User): number {
