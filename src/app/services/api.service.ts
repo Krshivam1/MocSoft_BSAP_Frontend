@@ -971,6 +971,169 @@ getMenus(
     );
   }
 
+  // Dashboard Operations
+  /**
+   * GET /dashboard/overview
+   */
+  getDashboardOverview(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/overview`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/stats
+   */
+  getDashboardStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/stats`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/users/stats
+   */
+  getDashboardUserStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/users/stats`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/users/by-role
+   */
+  getUsersByRole(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/users/by-role`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/users/by-state
+   */
+  getUsersByState(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/users/by-state`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/users/recent?limit=10
+   */
+  getRecentUsers(limit: number = 10): Observable<ApiResponse<any>> {
+    const params = `?limit=${limit}`;
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/users/recent${params}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/performance/overview
+   */
+  getPerformanceOverview(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/performance/overview`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/performance/by-month
+   */
+  getPerformanceByMonth(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/performance/by-month`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/performance/by-module
+   */
+  getPerformanceByModule(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/performance/by-module`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/performance/trends
+   */
+  getPerformanceTrends(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/performance/trends`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/geography/stats
+   */
+  getGeographyStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/geography/stats`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/geography/distribution
+   */
+  getGeographyDistribution(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/geography/distribution`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/modules/stats
+   */
+  getDashboardModuleStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/modules/stats`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/questions/stats
+   */
+  getDashboardQuestionStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/questions/stats`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/system/health
+   */
+  getSystemHealth(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/system/health`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * GET /dashboard/activity/recent?limit=20
+   */
+  getRecentActivity(limit: number = 20): Observable<ApiResponse<any>> {
+    const params = `?limit=${limit}`;
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseUrl}dashboard/activity/recent${params}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
 
   getMenuDropdown(): Observable<ApiResponse<Menu[]>> {
     return this.http.get<ApiResponse<Menu[]>>(
@@ -1472,9 +1635,9 @@ getUsers(
   );
 }
 
-getUserById(id: number): Observable<ApiResponse<User>> {
+getUserSelf(): Observable<ApiResponse<User>> {
   return this.http.get<ApiResponse<User>>(
-    this.baseUrl + "users/" + id,
+    this.baseUrl + "users/self",
     { headers: this.headersWithToken = this.getHeaders() }
   );
 }

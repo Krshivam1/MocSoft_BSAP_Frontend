@@ -2,7 +2,9 @@
   <div class="main-area">
     <div class="profile-row">
       <div class="welcome">
-        <h2>Welcome to Bihar Police</h2>
+        <h2>DARPAN BSAP</h2>
+        <h2>Data Analysis Software For Reforming Police Functions & Addressing Emergent Needs </h2>
+        <h2>Welcome To Bihar Special Armed Police Dashboard</h2>
         <div class="user-meta">
           <div class="meta-left">
             <div><strong>User Id :</strong> {{ user.email }}</div>
@@ -21,7 +23,7 @@
       </div>
     </div>
     <div class="quote">"Whatever gets measured, gets done" - Peter Drucker</div>
-    <div class="cards-grid">
+    <div class="cards-grid" *ngIf="roleId==1">
       <div *ngFor="let card of cards" class="info-card" [ngStyle]="{'background-image': card.gradient}">
         <div class="card-title">{{ card.title }}</div>
         <div class="card-count">{{ card.count }}</div>
@@ -31,9 +33,11 @@
    
   </div>
 
-  <aside class="side-area">
-    <h3>Dashboard</h3>
-    <div class="side-sub">Data Entry Status</div>
+  <aside class="side-area" *ngIf="roleId==1">
+    <div class="side-header" style="position:sticky;top:0;background:transparent;padding-bottom:8px;">
+      <h3>Dashboard</h3>
+      <div class="side-sub">Data Entry Status</div>
+    </div>
     <div class="status-list">
       <div *ngFor="let item of dataStatus" class="status-item">
         <div class="loc">{{ item.name }}</div>
