@@ -950,7 +950,7 @@ getMenus(
 
   getActiveMenus(): Observable<ApiResponse<Menu[]>> {
     return this.http.get<ApiResponse<Menu[]>>(
-      `${this.baseUrl}menus/active`,
+      `${this.baseUrl}menus/status/active`,
       { headers: this.getHeaders() }
     );
   }
@@ -1911,4 +1911,17 @@ testBattalionRoutes(): Observable<any> {
   );
 }
 
+getRolePermissions(roleId: number): Observable<ApiResponse<Permission[]>> {
+  return this.http.get<ApiResponse<Permission[]>>(
+    this.baseUrl + 'permission-handle/'+ roleId,
+    { headers: this.headersWithToken = this.getHeaders() }
+  );
+}
+createRolePermissions(roleId: number, data: any): Observable<ApiResponse<any>> {
+  return this.http.post<ApiResponse<any>>(
+    this.baseUrl + 'permission-handle/' + roleId,
+    data,
+    { headers: this.headersWithToken = this.getHeaders('application/json') }
+  );
+}
 }

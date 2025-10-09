@@ -24,6 +24,7 @@ import { ReportComponent } from './report/report.component';
 import { CommunicationsComponent } from './communications/communications.component';
 import { PerformanceComponent } from './performance/performance.component';
 import { BattalionComponent } from './battalion/battalion.component';
+import { RolePermissionComponent } from './role-permission/role-permission.component';
 
 
 @NgModule({
@@ -56,6 +57,7 @@ import { BattalionComponent } from './battalion/battalion.component';
     ReportComponent,
     CommunicationsComponent,
     BattalionComponent,
+    RolePermissionComponent,
   ]
 })
 export class DashboardModule { }

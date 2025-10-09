@@ -21,6 +21,7 @@ import { ReportComponent } from './report/report.component';
 import { CommunicationsComponent } from './communications/communications.component';
 import { PerformanceComponent } from './performance/performance.component';
 import { BattalionComponent } from './battalion/battalion.component';
+import { RolePermissionComponent } from './role-permission/role-permission.component';
 
 const routes: Routes = [
   {
@@ -47,7 +48,8 @@ const routes: Routes = [
       { path: 'report', component: ReportComponent },
       { path: 'communications', component: CommunicationsComponent },
       { path: 'performance', component: PerformanceComponent }, // Ensure PerformanceComponent is imported
-      { path: 'battalion', component: BattalionComponent }
+      { path: 'battalion', component: BattalionComponent },
+      { path: 'role-permissions', component: RolePermissionComponent }
     ]
   }
 ];

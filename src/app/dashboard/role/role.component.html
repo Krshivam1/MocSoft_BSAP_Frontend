@@ -20,7 +20,7 @@
         <option value="100">100</option>
       </select>
       <span>entries</span>
-    </div>
+    </div> 
     
     <div class="search-box">
       <label for="search">Search:</label>
@@ -72,6 +72,7 @@
           <td>
             <div class="action-buttons">
               <button class="edit-btn" (click)="showEditRoleModal(role)">Edit</button>
+              <button class="permissions-btn" (click)="navigateToRolePermissions(role.id)">Permissions</button>
               <button 
                 class="deactivate-btn" 
                 [class.activate]="!role.active"

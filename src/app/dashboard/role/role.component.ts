@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ApiService, ApiResponse, Role } from '../../services/api.service';
 
 
@@ -17,7 +18,7 @@ export class RoleComponent implements OnInit {
   isRoleEditMode: boolean = false;
   
   searchTerm: string = '';
-  pageSize: number = 10;
+  pageSize: number = 10; 
   currentPage: number = 1;
   totalRoles: number = 0;
   originalTotalRoles: number = 0;
@@ -25,7 +26,7 @@ export class RoleComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService, private router: Router) { }
 
   ngOnInit(): void {
     this.loadRoles();
@@ -235,6 +236,10 @@ export class RoleComponent implements OnInit {
   getEndRecord(): number {
     const endRecord = this.currentPage * this.pageSize;
     return Math.min(endRecord, this.totalRoles);
+  }
+
+  navigateToRolePermissions(roleId: number): void {
+    this.router.navigate(['/dashboard/role-permissions'], { queryParams: { roleId: roleId } });
   }
 
 }
