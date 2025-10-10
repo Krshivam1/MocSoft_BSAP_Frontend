@@ -121,6 +121,16 @@
   display: flex;
   gap: 15px;
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+/* Enhanced shadow when sticky */
+.bulk-actions.sticky {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .bulk-btn {
@@ -412,6 +422,9 @@
   .bulk-actions {
     flex-direction: column;
     align-items: stretch;
+    position: sticky;
+    top: 0;
+    padding: 10px 15px;
   }
 
   .save-btn {
@@ -444,10 +457,20 @@
 
   .header,
   .permission-types-legend,
-  .bulk-actions,
   .permissions-section,
   .permissions-summary {
     padding: 15px;
+  }
+
+  .bulk-actions {
+    padding: 10px 15px;
+    gap: 10px;
+  }
+
+  .bulk-btn,
+  .save-btn {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 
   .permission-types {
