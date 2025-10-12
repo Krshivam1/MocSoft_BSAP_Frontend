@@ -14,7 +14,7 @@ export class QuestionsComponent implements OnInit {
   paginatedQuestions: Question[] = [];
   
   // Pagination
-  currentPage = 1;
+  currentPage = 1; 
   entriesPerPage = 10;
   totalPages = 0;
   totalRecords = 0;
@@ -469,7 +469,10 @@ export class QuestionsComponent implements OnInit {
     };
     if (this.formData.topicId) {
       this.loadSubTopicsByTopic(this.formData.topicId);
+      this.loadQuestionsByTopic(this.formData.topicId);
     }
+    // Set conditional visibility flags based on default value
+    this.onDefaultValueChange();
     this.showModal = true;
   }
 

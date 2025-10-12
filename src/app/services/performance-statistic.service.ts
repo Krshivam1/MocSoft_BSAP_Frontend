@@ -45,6 +45,7 @@ export interface TopicDTO {
 }
 
 export interface QuestionDTO {
+  defaultQue: any;
   id: number;
   tId: number;
   question: string;
@@ -64,6 +65,7 @@ export interface QuestionDTO {
   checkID?: string;
   currentCountList?: string[];
   ISNew?: boolean;
+  
 }
 
 export interface SubTopicDTO {

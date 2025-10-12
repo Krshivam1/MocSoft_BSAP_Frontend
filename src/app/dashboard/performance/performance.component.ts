@@ -210,7 +210,7 @@ export class PerformanceComponent implements OnInit {
    */
   private buildFormControls(): void {
     if (!this.currentTopic) {
-      // console.log('No current topic found');
+      console.log('No current topic found');
       return;
     }
 
@@ -241,23 +241,51 @@ export class PerformanceComponent implements OnInit {
     if (this.currentTopic.formType === 'Q/ST' || this.currentTopic.formType === 'ST/Q') {
       // console.log('Processing matrix form type:', this.currentTopic.formType);
       
-      // Use questionDTOs for questions (which matches the API response structure)
-      const questions = this.currentTopic.questionDTOs || this.currentTopic.questions || [];
+      // Use questions array first, then fallback to questionDTOs
+      const questions = this.currentTopic.questions || this.currentTopic.questionDTOs || [];
       const subTopics = this.currentTopic.subTopics || [];
       
       // console.log(`Creating matrix with ${questions.length} questions and ${subTopics.length} subTopics`);
       
       if (questions.length > 0 && subTopics.length > 0) {
         questions.forEach((question, qIndex) => {
-          // console.log(`Processing question ${qIndex + 1}:`, question.question);
+          console.log(`Processing question ${qIndex + 1}:`, question.question);
           
           subTopics.forEach((subTopic, stIndex) => {
-            // console.log(`  - Creating control for subTopic ${stIndex + 1}:`, subTopic.subTopicName);
+            console.log(`  - Creating control for subTopic ${stIndex + 1}:`, subTopic.subTopicName);
             const controlName = `matrix_${question.id}_${subTopic.id}`;
+            
+            // Get value from currentCountList, valueList, or default to 0
+            let currentValue = '0';
+            const questionWithList = question as any; // Type assertion for extended properties
+            
+            // Log available data arrays
+            if (questionWithList.currentCountList) {
+              console.log(`  - currentCountList:`, questionWithList.currentCountList);
+            }
+            if (questionWithList.valueList) {
+              console.log(`  - valueList:`, questionWithList.valueList);
+            }
+            
+            // Priority: currentCountList -> valueList -> currentCount -> default '0'
+            if (questionWithList.currentCountList && questionWithList.currentCountList.length > stIndex) {
+              currentValue = questionWithList.currentCountList[stIndex] || '0';
+              console.log(`  - Using currentCountList[${stIndex}]: ${currentValue}`);
+            } else if (questionWithList.valueList && questionWithList.valueList.length > stIndex) {
+              currentValue = questionWithList.valueList[stIndex] || '0';
+              console.log(`  - Using valueList[${stIndex}]: ${currentValue}`);
+            } else if (question.currentCount && question.currentCount !== 'NONE') {
+              currentValue = question.currentCount;
+              console.log(`  - Using currentCount: ${currentValue}`);
+            } else {
+              console.log(`  - Using default: ${currentValue}`);
+            }
+            
             formControls[controlName] = [
-              question.currentCount || '',
-              question.type === 'REQUIRED' ? [Validators.required] : []
+              currentValue,
+              question.isDisabled ? [] : [Validators.required]
             ];
+            console.log(`✓ Created matrix control: ${controlName} = "${currentValue}"`);
           });
         });
       } else {
@@ -268,7 +296,6 @@ export class PerformanceComponent implements OnInit {
     }
 
     // console.log('Total form controls created:', Object.keys(formControls).length);
-    // console.log('Form controls:', Object.keys(formControls));
 
     this.performanceForm = this.formBuilder.group(formControls);
     
@@ -569,9 +596,18 @@ export class PerformanceComponent implements OnInit {
   private prepareStatisticsData(status: string): PerformanceStatistic[] {
     const statistics: PerformanceStatistic[] = [];
     const formValues = this.performanceForm.value;
+    
+    console.log('Preparing statistics data with status:', status);
+    console.log('Form values:', formValues);
+    console.log('Current topic form type:', this.currentTopic?.formType);
 
-    if (this.currentTopic?.questionDTOs) {
-      this.currentTopic.questionDTOs.forEach(question => {
+    // Use questions array first, then fallback to questionDTOs
+    const questions = this.currentTopic?.questions || this.currentTopic?.questionDTOs || [];
+    console.log('Questions for data preparation:', questions.length);
+
+    // Handle NORMAL form type
+    if (this.currentTopic?.formType === 'NORMAL') {
+      questions.forEach(question => {
         const controlName = `question_${question.id}`;
         const value = formValues[controlName];
         
@@ -587,27 +623,36 @@ export class PerformanceComponent implements OnInit {
       });
     }
 
-    // Handle matrix questions
+    // Handle matrix questions for Q/ST and ST/Q
     if (this.currentTopic?.formType === 'Q/ST' || this.currentTopic?.formType === 'ST/Q') {
-      this.currentTopic.questionDTOs?.forEach(question => {
+      questions.forEach(question => {
         this.currentTopic?.subTopics?.forEach(subTopic => {
           const controlName = `matrix_${question.id}_${subTopic.id}`;
           const value = formValues[controlName];
           
-          if (value !== undefined && value !== '') {
-            statistics.push({
+          console.log(`Checking control: ${controlName} = ${value}`);
+          
+          if (value !== undefined && value !== '' && value !== null) {
+            const statistic = {
               questionId: question.id,
               value: value.toString(),
               topicId: this.currentTopic!.id,
               subTopicId: subTopic.id,
               moduleId: this.currentModule!.id,
               status: status
-            });
+            };
+            
+            console.log('Adding statistic:', statistic);
+            statistics.push(statistic);
+          } else {
+            console.log(`Skipping control ${controlName}: value is empty/undefined`);
           }
         });
       });
     }
 
+    console.log('Final prepared statistics:', statistics);
+    console.log('Total statistics count:', statistics.length);
     return statistics;
   }
 

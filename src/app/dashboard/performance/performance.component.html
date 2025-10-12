@@ -14,7 +14,7 @@
       <span class="breadcrumb-separator">/</span>
       <span class="breadcrumb-item active">{{ currentTopic.topicName }}</span>
     </div>
-  </div>
+  </div> 
 
   <!-- Alert Messages -->
   <div *ngIf="errorMessage" class="alert alert-error">
@@ -129,7 +129,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let question of currentTopic.questionDTOs; let i = index" class="matrix-row">
+              <tr *ngFor="let question of currentTopic.questions || currentTopic.questionDTOs; let i = index" class="matrix-row">
                 <td class="question-cell">
                   <span class="question-number">{{ i + 1 }}.</span>
                   <span class="question-text" [innerHTML]="formatQuestionText(question)"></span>
@@ -140,7 +140,8 @@
                     class="matrix-input"
                     [formControlName]="'matrix_' + question.id + '_' + subTopic.id"
                     [readonly]="question.isDisabled || subTopic.isDisabled || isCalculatedField(question.id, subTopic.id)"
-                    [class.calculated-field]="isCalculatedField(question.id, subTopic.id)">
+                    [class.calculated-field]="isCalculatedField(question.id, subTopic.id)"
+                    placeholder="0">
                 </td>
               </tr>
             </tbody>
@@ -157,9 +158,9 @@
           <table class="matrix-table">
             <thead>
               <tr>
-                <th class="subtopic-header">Sub Topics</th>
-                <th *ngFor="let question of currentTopic.questionDTOs" class="question-header">
-                  Q{{ question.id }}
+                <th class="subtopic-header">SUB TOPICS</th>
+                <th *ngFor="let question of currentTopic.questions || currentTopic.questionDTOs; let i = index" class="question-header">
+                  {{ question.question }}
                 </th>
               </tr>
             </thead>
@@ -168,13 +169,14 @@
                 <td class="subtopic-cell">
                   {{ subTopic.subTopicName }}
                 </td>
-                <td *ngFor="let question of currentTopic.questionDTOs" class="input-cell">
+                <td *ngFor="let question of currentTopic.questions || currentTopic.questionDTOs" class="input-cell">
                   <input 
                     type="number" 
                     class="matrix-input"
                     [formControlName]="'matrix_' + question.id + '_' + subTopic.id"
                     [readonly]="question.isDisabled || subTopic.isDisabled || isCalculatedField(question.id, subTopic.id)"
-                    [class.calculated-field]="isCalculatedField(question.id, subTopic.id)">
+                    [class.calculated-field]="isCalculatedField(question.id, subTopic.id)"
+                    placeholder="0">
                 </td>
               </tr>
             </tbody>
@@ -182,13 +184,13 @@
         </div>
         
         <!-- Question Details Section -->
-        <div class="questions-details">
+        <!-- <div class="questions-details">
           <h4>Question Details</h4>
-          <div *ngFor="let question of currentTopic.questionDTOs; let i = index" class="question-detail">
-            <span class="question-label">Q{{ question.id }}:</span>
+          <div *ngFor="let question of currentTopic.questions || currentTopic.questionDTOs; let i = index" class="question-detail">
+            <span class="question-label">Q{{ question.tId || (i + 1) }}:</span>
             <span class="question-text" [innerHTML]="formatQuestionText(question)"></span>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Action Buttons -->

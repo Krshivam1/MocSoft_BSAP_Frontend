@@ -1,3 +1,4 @@
+ 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -14,7 +15,26 @@ import { ApiService } from '../services/api.service';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
+  ngOnInit() {
+    this.loadUserMenu();
+    this.loadUserData();
+    document.addEventListener('click', this.handleOutsideClick);
+  }
+
+  ngOnDestroy() {
+    document.removeEventListener('click', this.handleOutsideClick);
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  handleOutsideClick = (event: MouseEvent) => {
+    const dropdown = document.querySelector('.user-profile-container');
+    if (dropdown && !dropdown.contains(event.target as Node)) {
+      this.userDropdownOpen = false;
+    }
+  };
  
+    userDropdownOpen = false;
+
   isSidenavCollapsed = false;
   user: User | null = null;
   isLoadingMenu = true;
@@ -22,6 +42,15 @@ export class DashboardComponent implements OnInit {
   expandedMenus: { [id: number]: boolean } = {};
   expandedSubmenus: { [id: number]: boolean } = {};
   expandedSubchildren: { [id: number]: boolean } = {};
+  toggleUserDropdown() {
+    this.userDropdownOpen = !this.userDropdownOpen;
+  }
+
+  logout() {
+   // this.authService.clearAuthData();
+    this.router.navigate(['/login']);
+  }
+  
   toggleMenu(menuId: number) {
     const wasOpen = !!this.expandedMenus[menuId];
     Object.keys(this.expandedMenus).forEach(id => {
@@ -51,11 +80,7 @@ export class DashboardComponent implements OnInit {
     private apiService: ApiService
   ) {}
 
-  ngOnInit() {
-    this.loadUserMenu();
-    this.loadUserData();
-   
-  }
+  // Removed duplicate ngOnInit
 
   private loadUserData() {
     const userSub = this.authService.user$.subscribe(user => {
@@ -65,14 +90,38 @@ export class DashboardComponent implements OnInit {
 
     // Load user profile if not already loaded
     if (!this.user) {
+      // Try to get user data from localStorage first
+      const storedEmail = localStorage.getItem('email') || localStorage.getItem('userEmail');
+      const storedFirstName = localStorage.getItem('firstName');
+      const storedLastName = localStorage.getItem('lastName');
+      const storedRoleName = localStorage.getItem('roleName');
+
+      if (storedEmail && storedFirstName && storedRoleName) {
+        // Create user object from localStorage
+        this.user = {
+          id: 0, // Will be updated when API loads
+          firstName: storedFirstName,
+          lastName: storedLastName || '',
+          email: storedEmail,
+          role: {
+            id: 0,
+            roleName: storedRoleName
+          },
+          permissions: []
+        };
+      }
+
+      // Still try to load from API for complete data
       const profileSub = this.authService.loadUserProfile().subscribe({
         next: (user) => {
           this.user = user;
         },
         error: (error) => {
           console.error('Failed to load user profile:', error);
-          // If profile loading fails, user might need to re-login
-          //this.logout();
+          // If profile loading fails and we don't have localStorage data, user might need to re-login
+          if (!this.user) {
+            //this.logout();
+          }
         }
       });
       this.subscriptions.push(profileSub);
@@ -99,7 +148,7 @@ export class DashboardComponent implements OnInit {
       }
     });
     this.subscriptions.push(menuSub);
-  }
+  } 
 
   toggleSidenav() {
     this.isSidenavCollapsed = !this.isSidenavCollapsed;
@@ -149,21 +198,55 @@ export class DashboardComponent implements OnInit {
   // }
 
   getUserDisplayName(): string {
-    if (this.user?.name) {
-      return this.user.name;
+    if (this.user?.firstName) {
+      return this.user.firstName;
     }
-    if (this.user?.email) {
-      return this.user.email.split('@')[0];
+    // Fallback to localStorage
+    const firstName = localStorage.getItem('firstName');
+    if (firstName) {
+      return firstName;
+    }
+    // Fallback to email from localStorage
+    const email = this.user?.email || localStorage.getItem('email') || localStorage.getItem('userEmail');
+    if (email) {
+      return email.split('@')[0];
     }
     return 'User';
   }
 
   getUserEmail(): string {
-    return this.user?.email || '';
+    return this.user?.email || localStorage.getItem('email') || localStorage.getItem('userEmail') || '';
   }
 
   getUserRole(): string {
-    return this.user?.role || '';
+    return this.user?.role?.roleName || localStorage.getItem('roleName') || '';
+  }
+
+  getUserAvatar(): string {
+    // Return a default avatar or user's profile image
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.getUserDisplayName()) + '&background=6366f1&color=fff&size=40';
+  }
+
+  editProfile(): void {
+    // Prevent dropdown close propagation and navigate to profile
+    event?.stopPropagation();
+    this.userDropdownOpen = false;
+    console.log('Edit profile clicked');
+    // Add navigation logic here
+  }
+
+  widgetSettings(): void {
+    event?.stopPropagation();
+    this.userDropdownOpen = false;
+    console.log('Widget settings clicked');
+    // Add widget settings logic here
+  }
+
+  upgradeToPro(): void {
+    event?.stopPropagation();
+    this.userDropdownOpen = false;
+    console.log('Upgrade to professional clicked');
+    // Add upgrade logic here
   }
 
   hasRole(role: string): boolean {

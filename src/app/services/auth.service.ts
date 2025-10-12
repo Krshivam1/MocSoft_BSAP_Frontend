@@ -10,29 +10,44 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
-  status: boolean;
-  message: string;
-  data: {
-    token: string;
-    refreshToken?: string;
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: string;
-      permissions?: string[];
-    };
-  };
+export interface Role {
+  id: number;
+  roleName: string;
+  createdBy?: number;
+  updatedBy?: number;
+  active?: boolean;
+  created_date?: string;
+  updated_date?: string;
 }
 
 export interface User {
-  id: string;
+  id: number;
+  firstName: string;
+  lastName: string;
   email: string;
-  name: string;
-  role: string;
+  mobileNo?: string;
+  roleId?: number;
+  role: Role;
+  stateId?: number;
+  rangeId?: number;
+  isFirst?: boolean;
+  battalion?: number;
+  verified?: boolean;
   permissions?: string[];
 }
+
+export interface LoginResponse {
+  status: string;
+  message: string;
+  data: {
+    user: User;
+    token: string;
+    refreshToken?: string;
+    isFirstLogin?: boolean;
+  };
+}
+
+// User interface updated above
 
 export interface ApiResponse<T> {
   status: boolean;
@@ -51,7 +66,6 @@ export class AuthService {
   public user$ = this.userSubject.asObservable();
   
   constructor(private http: HttpClient, private router: Router) { 
-    // Check if user is already logged in
     const token = this.getToken();
     if (token && !this.isTokenExpired(token)) {
       this.isAuthenticatedSubject.next(true);
@@ -145,12 +159,17 @@ export class AuthService {
       { headers: this.getHeaders() }
     ).pipe(
       tap(response => {
-        if (response.status && response.data.token) {
+  if ((response.status === 'SUCCESS' || response.status === 'true') && response.data.token) {
           this.setTokens(response.data.token, response.data.refreshToken);
           this.userSubject.next(response.data.user);
           this.isAuthenticatedSubject.next(true);
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('userEmail', response.data.user.email);
+          // Store additional user info in localStorage
+          localStorage.setItem('lastName', response.data.user.lastName || '');
+          localStorage.setItem('firstName', response.data.user.firstName || '');
+          localStorage.setItem('roleName', response.data.user.role?.roleName || '');
+          localStorage.setItem('email', response.data.user.email || '');
         }
       }),
       catchError(this.handleError.bind(this))
@@ -286,7 +305,7 @@ export class AuthService {
 
   hasRole(role: string): boolean {
     const user = this.getCurrentUser();
-    return user?.role === role;
+  return user?.role?.roleName === role;
   }
 
   // Legacy method for backward compatibility

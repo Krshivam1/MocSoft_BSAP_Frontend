@@ -69,24 +69,24 @@ export class LoginComponent {
   }
 
   // Legacy login method for fallback
-  async onLoginLegacy() {
-    if (!this.email || !this.password) {
-      this.errorMessage = 'Please fill in all fields';
-      return;
-    }
+  // async onLoginLegacy() {
+  //   if (!this.email || !this.password) {
+  //     this.errorMessage = 'Please fill in all fields';
+  //     return;
+  //   }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+  //   this.isLoading = true;
+  //   this.errorMessage = '';
 
-    try {
-      await this.authService.loginLegacy(this.email, this.password);
-      this.router.navigate(['/dashboard']);
-    } catch (error: any) {
-      this.errorMessage = error.message || 'Invalid credentials. Please try again.';
-    } finally {
-      this.isLoading = false;
-    }
-  }
+  //   try {
+  //     await this.authService.loginLegacy(this.email, this.password);
+  //     this.router.navigate(['/dashboard']);
+  //   } catch (error: any) {
+  //     this.errorMessage = error.message || 'Invalid credentials. Please try again.';
+  //   } finally {
+  //     this.isLoading = false;
+  //   }
+  // }
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
