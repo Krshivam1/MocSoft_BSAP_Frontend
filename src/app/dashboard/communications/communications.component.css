@@ -46,6 +46,8 @@
 .modal-content {
   border-radius: 12px;
   padding: 15px;
+  width: 500px;
+  
 }
 
 /* ---------- Modal ---------- */
@@ -126,4 +128,140 @@ textarea.form-control {
   font-size: 0.85rem;
   padding: 6px 10px;
   border-radius: 6px;
+}
+
+/* ---------- Detail View Modal ---------- */
+.detail-modal {
+  max-width: 1000px;
+  width: 95%;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.status-btn {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.back-btn {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.status-btn:hover,
+.back-btn:hover {
+  background: #138496;
+}
+
+.communication-details {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.detail-row strong {
+  color: #333;
+  margin-right: 8px;
+}
+
+.replies-section {
+  margin: 20px 0;
+}
+
+.send-reply-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.send-reply-section h5 {
+  margin-bottom: 15px;
+  color: #333;
+  font-weight: 600;
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.send-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.send-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.view-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+.view-btn:hover {
+  background: #218838;
+}
+
+.document-icon {
+  color: #007bff;
+  font-size: 16px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

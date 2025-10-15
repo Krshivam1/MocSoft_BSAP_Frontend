@@ -139,7 +139,7 @@
                     type="number" 
                     class="matrix-input"
                     [formControlName]="'matrix_' + question.id + '_' + subTopic.id"
-                    [readonly]="question.isDisabled || subTopic.isDisabled || isCalculatedField(question.id, subTopic.id)"
+                    
                     [class.calculated-field]="isCalculatedField(question.id, subTopic.id)"
                     placeholder="0">
                 </td>
@@ -174,7 +174,6 @@
                     type="number" 
                     class="matrix-input"
                     [formControlName]="'matrix_' + question.id + '_' + subTopic.id"
-                    [readonly]="question.isDisabled || subTopic.isDisabled || isCalculatedField(question.id, subTopic.id)"
                     [class.calculated-field]="isCalculatedField(question.id, subTopic.id)"
                     placeholder="0">
                 </td>

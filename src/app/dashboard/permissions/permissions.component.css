@@ -25,6 +25,8 @@
   background: #fff;
   padding: 15px;
   border-radius: 6px;
+  width: 500px;
+  max-width: 700px;
 }
 .page-title-subheading {
   margin-top: 4px; /* small spacing below heading */

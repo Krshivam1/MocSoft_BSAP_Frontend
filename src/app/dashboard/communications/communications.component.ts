@@ -4,10 +4,25 @@ interface Communication {
   id: number;
   createdDate: Date;
   subject: string;
-  recipient: string;
+  battalionId: number;
+  battalionName?: string;
   message: string;
   document?: string;
   active: boolean;
+  replies?: Reply[];
+}
+
+interface Battalion {
+  id: number;
+  name: string;
+}
+
+interface Reply {
+  id: number;
+  replyDate: Date;
+  replyBy: string;
+  replyMessage: string;
+  document?: string;
 }
 
 @Component({
@@ -20,12 +35,19 @@ export class CommunicationsComponent implements OnInit {
   communications: Communication[] = [];
   filteredCommunications: Communication[] = [];
   paginatedCommunications: Communication[] = [];
+  battalions: Battalion[] = [];
   
   // Modal properties
   showModal = false;
+  showDetailView = false;
   currentCommunication: Communication = this.createEmptyCommunication();
+  selectedCommunication: Communication | null = null;
   isEditMode = false;
   isLoading = false;
+  
+  // Reply properties
+  replyMessage = '';
+  replyDocument = '';
   
   // Search and pagination properties
   searchTerm = '';
@@ -43,18 +65,51 @@ export class CommunicationsComponent implements OnInit {
   Math = Math;
 
   ngOnInit() {
+    this.loadBattalions();
     this.loadCommunications();
+  }
+
+  private loadBattalions() {
+    // TODO: Replace with actual API call
+    this.battalions = [
+      { id: 1, name: 'All Districts' },
+      { id: 2, name: 'Mumbai District' },
+      { id: 3, name: 'Delhi District' },
+      { id: 4, name: 'Kolkata District' },
+      { id: 5, name: 'Chennai District' },
+      { id: 6, name: 'Bangalore District' },
+      { id: 7, name: 'Hyderabad District' },
+      { id: 8, name: 'Pune District' }
+    ];
   }
 
   private loadCommunications() {
     // TODO: Replace with actual API call
     this.communications = [
-      { id: 1, createdDate: new Date('2025-09-25'), subject: 'Monthly Security Report', recipient: 'All Districts', message: 'Please submit your monthly security reports by end of this week.', document: 'security-template.pdf', active: true },
-      { id: 2, createdDate: new Date('2025-09-24'), subject: 'Training Schedule Update', recipient: 'Mumbai District', message: 'The training schedule for next month has been updated. Please check the new timings.', active: true },
-      { id: 3, createdDate: new Date('2025-09-23'), subject: 'Budget Allocation Notice', recipient: 'Finance Department', message: 'Budget allocation for Q4 has been approved. Please coordinate with your teams.', document: 'budget-q4.xlsx', active: false },
-      { id: 4, createdDate: new Date('2025-09-22'), subject: 'Policy Update Circular', recipient: 'All Officers', message: 'New policy updates have been implemented. All officers must review the attached document.', document: 'policy-update.pdf', active: true },
-      { id: 5, createdDate: new Date('2025-09-21'), subject: 'Equipment Maintenance', recipient: 'Technical Team', message: 'Scheduled maintenance for all equipment will be conducted next week.', active: true },
-      { id: 6, createdDate: new Date('2025-09-20'), subject: 'Annual Review Meeting', recipient: 'Senior Management', message: 'Annual review meeting scheduled for next month. Please prepare your department reports.', active: false }
+      { 
+        id: 1, 
+        createdDate: new Date('2025-10-14'), 
+        subject: 'Hello For Testing Functionality', 
+        battalionId: 1,
+        battalionName: 'All Districts',
+        message: 'Testing For function', 
+        document: 'security-template.pdf', 
+        active: true,
+        replies: [
+          {
+            id: 1,
+            replyDate: new Date('2025-10-14'),
+            replyBy: 'Muzaffarpur Rail',
+            replyMessage: 'Testing For function',
+            document: 'reply-document.pdf'
+          }
+        ]
+      },
+      { id: 2, createdDate: new Date('2025-09-24'), subject: 'Training Schedule Update', battalionId: 2, battalionName: 'Mumbai District', message: 'The training schedule for next month has been updated. Please check the new timings.', active: true, replies: [] },
+      { id: 3, createdDate: new Date('2025-09-23'), subject: 'Budget Allocation Notice', battalionId: 3, battalionName: 'Delhi District', message: 'Budget allocation for Q4 has been approved. Please coordinate with your teams.', document: 'budget-q4.xlsx', active: false, replies: [] },
+      { id: 4, createdDate: new Date('2025-09-22'), subject: 'Policy Update Circular', battalionId: 1, battalionName: 'All Districts', message: 'New policy updates have been implemented. All officers must review the attached document.', document: 'policy-update.pdf', active: true, replies: [] },
+      { id: 5, createdDate: new Date('2025-09-21'), subject: 'Equipment Maintenance', battalionId: 4, battalionName: 'Kolkata District', message: 'Scheduled maintenance for all equipment will be conducted next week.', active: true, replies: [] },
+      { id: 6, createdDate: new Date('2025-09-20'), subject: 'Annual Review Meeting', battalionId: 5, battalionName: 'Chennai District', message: 'Annual review meeting scheduled for next month. Please prepare your department reports.', active: false, replies: [] }
     ];
 
     this.applyFilters();
@@ -65,7 +120,7 @@ export class CommunicationsComponent implements OnInit {
       id: 0,
       createdDate: new Date(),
       subject: '',
-      recipient: '',
+      battalionId: 0,
       message: '',
       document: '',
       active: true
@@ -90,7 +145,7 @@ export class CommunicationsComponent implements OnInit {
       const term = this.searchTerm.toLowerCase().trim();
       this.filteredCommunications = this.communications.filter(communication =>
         communication.subject.toLowerCase().includes(term) ||
-        communication.recipient.toLowerCase().includes(term) ||
+        (communication.battalionName && communication.battalionName.toLowerCase().includes(term)) ||
         communication.message.toLowerCase().includes(term)
       );
     }
@@ -231,8 +286,82 @@ export class CommunicationsComponent implements OnInit {
     return this.communications.length > 0 ? Math.max(...this.communications.map(c => c.id)) + 1 : 1;
   }
 
+  // Detail view functionality
+  viewCommunicationDetails(communication: Communication): void {
+    this.selectedCommunication = { ...communication };
+    this.showDetailView = true;
+  }
+
+  closeDetailView(): void {
+    this.showDetailView = false;
+    this.selectedCommunication = null;
+    this.replyMessage = '';
+    this.replyDocument = '';
+  }
+
+  sendReply(): void {
+    if (!this.replyMessage.trim() || !this.selectedCommunication) {
+      return;
+    }
+
+    this.isLoading = true;
+    
+    // Create new reply
+    const newReply: Reply = {
+      id: this.getNextReplyId(),
+      replyDate: new Date(),
+      replyBy: 'Current User', // TODO: Get from auth service
+      replyMessage: this.replyMessage,
+      document: this.replyDocument || undefined
+    };
+
+    // Simulate API call
+    setTimeout(() => {
+      if (this.selectedCommunication) {
+        if (!this.selectedCommunication.replies) {
+          this.selectedCommunication.replies = [];
+        }
+        this.selectedCommunication.replies.push(newReply);
+
+        // Update the original communication in the array
+        const index = this.communications.findIndex(c => c.id === this.selectedCommunication!.id);
+        if (index !== -1) {
+          this.communications[index] = { ...this.selectedCommunication };
+        }
+      }
+
+      this.replyMessage = '';
+      this.replyDocument = '';
+      this.isLoading = false;
+    }, 500);
+  }
+
+  private getNextReplyId(): number {
+    let maxId = 0;
+    this.communications.forEach(comm => {
+      if (comm.replies) {
+        comm.replies.forEach(reply => {
+          if (reply.id > maxId) {
+            maxId = reply.id;
+          }
+        });
+      }
+    });
+    return maxId + 1;
+  }
+
+  // Helper methods
+  getBattalionName(battalionId: number): string {
+    const battalion = this.battalions.find(b => b.id === battalionId);
+    return battalion ? battalion.name : '';
+  }
+
   // TrackBy function for performance
   trackByCommunicationId(index: number, communication: Communication): number {
     return communication.id;
+  }
+
+  trackByReplyId(index: number, reply: Reply): number {
+    return reply.id;
   }
 }

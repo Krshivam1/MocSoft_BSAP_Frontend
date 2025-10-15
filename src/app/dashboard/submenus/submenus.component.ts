@@ -17,7 +17,7 @@ interface SubMenu {
   priority: number;
   active: boolean;
   createdBy?: number;
-  updatedBy?: number;
+  updatedBy?: number; 
   createdAt?: string;
   updatedAt?: string;
 }
@@ -192,14 +192,41 @@ export class SubmenusComponent implements OnInit {
 
   editSubmenu(submenu: SubMenu): void {
     this.isEditMode = true;
-    this.currentSubmenu = { ...submenu };
+    console.log('Original submenu data:', submenu);
+    
+    // Map server response fields to component fields
+    this.currentSubmenu = {
+      id: submenu.subMenuId || submenu.id, // Use subMenuId as the primary ID
+      menuId: submenu.menuId,
+      subMenuName: submenu.menuName || submenu.subMenuName, // Server sends menuName, we need subMenuName
+      subMenuUrl: submenu.menuUrl || submenu.subMenuUrl, // Server sends menuUrl, we need subMenuUrl
+      priority: submenu.priority,
+      active: submenu.active,
+      // Keep original server fields for reference
+      subMenuId: submenu.subMenuId,
+      parentMenu: submenu.parentMenu
+    };
+    
+    console.log('Mapped currentSubmenu:', this.currentSubmenu);
     this.showModal = true;
   }
 
 
   addSubmenu(): void {
     this.isLoading = true;
-    this.apiService.createSubMenu(this.currentSubmenu).subscribe({
+    
+    // Prepare data in the format expected by the server
+    const createData = {
+      menuId: this.currentSubmenu.menuId,
+      subMenuName: this.currentSubmenu.subMenuName,
+      subMenuUrl: this.currentSubmenu.subMenuUrl,
+      priority: this.currentSubmenu.priority,
+      active: this.currentSubmenu.active
+    };
+    
+    console.log('Sending create data:', createData);
+    
+    this.apiService.createSubMenu(createData).subscribe({
       next: (res: ApiResponse<SubMenu>) => {
         this.isLoading = false;
         if (res.status === 'SUCCESS') {
@@ -209,6 +236,7 @@ export class SubmenusComponent implements OnInit {
       },
       error: err => {
         this.isLoading = false;
+        console.error('Create error:', err);
       }
     });
   }
@@ -216,7 +244,19 @@ export class SubmenusComponent implements OnInit {
 
   updateSubmenu(): void {
     this.isLoading = true;
-    this.apiService.updateSubMenu(this.currentSubmenu.id, this.currentSubmenu).subscribe({
+    
+    // Prepare data in the format expected by the server
+    const updateData = {
+      menuId: this.currentSubmenu.menuId,
+      subMenuName: this.currentSubmenu.subMenuName,
+      subMenuUrl: this.currentSubmenu.subMenuUrl,
+      priority: this.currentSubmenu.priority,
+      active: this.currentSubmenu.active
+    };
+    
+    console.log('Sending update data:', updateData);
+    
+    this.apiService.updateSubMenu(this.currentSubmenu.id, updateData).subscribe({
       next: (res: ApiResponse<SubMenu>) => {
         this.isLoading = false;
         if (res.status === 'SUCCESS') {
@@ -226,6 +266,7 @@ export class SubmenusComponent implements OnInit {
       },
       error: err => {
         this.isLoading = false;
+        console.error('Update error:', err);
       }
     });
   }
