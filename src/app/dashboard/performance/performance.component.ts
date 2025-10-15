@@ -362,6 +362,7 @@ export class PerformanceComponent implements OnInit {
             // console.log(`Target reference "${targetRef}" split into:`, targetParts);
             
             if (targetParts.length === 2) {
+              // Matrix format: questionId_subTopicId
               const targetQuestionId = targetParts[0];
               const targetSubTopicId = targetParts[1];
               const targetControlName = `matrix_${targetQuestionId}_${targetSubTopicId}`;
@@ -375,6 +376,24 @@ export class PerformanceComponent implements OnInit {
               } else {
                 // console.warn(`Target control "${targetControlName}" not found in form`);
                 // console.log('Available form controls:', Object.keys(this.performanceForm.controls));
+              }
+            } else if (targetParts.length === 1 && /^\d+$/.test(targetRef)) {
+              // Simple question ID format: QID (like: 651-652=653)
+              // Calculate for each subtopic individually
+              const targetQuestionId = targetRef;
+              
+              if (this.currentTopic?.subTopics) {
+                this.currentTopic.subTopics.forEach(subTopic => {
+                  // Calculate formula value for this specific subtopic
+                  const columnCalculatedValue = this.calculateFormulaValueForColumn(question, subTopic.id);
+                  const targetControlName = `matrix_${targetQuestionId}_${subTopic.id}`;
+                  const targetControl = this.performanceForm.get(targetControlName);
+                  
+                  if (targetControl) {
+                    // console.log(`Setting value "${columnCalculatedValue}" to control "${targetControlName}" (QID format)`);
+                    targetControl.setValue(columnCalculatedValue, { emitEvent: false });
+                  }
+                });
               }
             } else {
               // console.error(`Invalid target reference format: "${targetRef}"`);
@@ -741,6 +760,56 @@ export class PerformanceComponent implements OnInit {
   }
 
   /**
+   * Calculate formula-based values for a specific column (subtopic)
+   */
+  calculateFormulaValueForColumn(question: QuestionDTO, subTopicId: number): string {
+    if (!question.formula) {
+      return question.defaultVal || '';
+    }
+    
+    try {
+      // Split the formula by '=' to get the calculation part (left side) and target (right side)
+      const formulaParts = question.formula.split('=');
+      if (formulaParts.length !== 2) {
+        return question.defaultVal || '';
+      }
+      
+      // Get the calculation expression (left side of =)
+      let calculationExpression = formulaParts[0].trim();
+      
+      // For QID format formulas, replace question IDs with their values for this specific subtopic
+      if (this.currentTopic?.questions || this.currentTopic?.questionDTOs) {
+        const questions = this.currentTopic.questions || this.currentTopic.questionDTOs || [];
+        
+        questions.forEach(q => {
+          const questionIdPattern = new RegExp(`\\b${q.id}\\b`, 'g');
+          
+          // Check if this question ID appears in the calculation expression
+          if (questionIdPattern.test(calculationExpression)) {
+            // Get the value for this question and subtopic
+            const cellValue = this.getMatrixValue(q.id, subTopicId);
+            const numericValue = parseFloat(cellValue) || 0;
+            // console.log(`Replacing question ID ${q.id} with cell value ${numericValue} for subtopic ${subTopicId}`);
+            calculationExpression = calculationExpression.replace(new RegExp(`\\b${q.id}\\b`, 'g'), numericValue.toString());
+          }
+        });
+      }
+      
+      // Clean up the expression - ensure it's safe for evaluation
+      if (!/^[\d\s+\-*/().]+$/.test(calculationExpression)) {
+        return question.defaultVal || '';
+      }
+      
+      // Evaluate arithmetic expression
+      const result = eval(calculationExpression);
+      return result.toString();
+    } catch (error) {
+      // console.error('Formula calculation error:', error);
+      return question.defaultVal || '';
+    }
+  }
+
+  /**
    * Calculate formula-based values
    */
   calculateFormulaValue(question: QuestionDTO): string {
@@ -769,7 +838,7 @@ export class PerformanceComponent implements OnInit {
       const formValues = this.performanceForm.value;
       // console.log('Current form values:', formValues);
       
-      // Replace matrix references (questionId_subTopicId) in calculation expression with actual values
+      // Replace matrix references (questionId_subTopicId) and simple question references (QID) in calculation expression
       Object.keys(formValues).forEach(key => {
         if (key.startsWith('matrix_')) {
           // Extract questionId and subTopicId from key like 'matrix_483_36'
@@ -786,6 +855,22 @@ export class PerformanceComponent implements OnInit {
           }
         }
       });
+      
+      // Handle simple question ID references (QID format like: 651-652=653)
+      // Find all question IDs in the expression and replace with row totals
+      if (this.currentTopic?.questionDTOs) {
+        this.currentTopic.questionDTOs.forEach(q => {
+          const questionIdPattern = new RegExp(`\\b${q.id}\\b`, 'g');
+          
+          // Check if this question ID appears in the calculation expression
+          if (questionIdPattern.test(calculationExpression)) {
+            // Calculate the row total for this question
+            const rowTotal = this.calculateRowTotal(q.id);
+            // console.log(`Replacing question ID ${q.id} with row total ${rowTotal} in expression`);
+            calculationExpression = calculationExpression.replace(new RegExp(`\\b${q.id}\\b`, 'g'), rowTotal.toString());
+          }
+        });
+      }
       
       // console.log('Expression after substitution:', calculationExpression);
       
