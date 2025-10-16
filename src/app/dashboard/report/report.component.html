@@ -1,4 +1,273 @@
-<div class="report-container">
-  <h2>Report Management</h2>
-  <p>Report management functionality will be implemented here.</p>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+        <h4 class="mb-sm-0 font-size-18">Report Generation</h4>
+        <div class="page-title-right">
+          <ol class="breadcrumb m-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Dashboard</a></li>
+            <li class="breadcrumb-item active">Reports</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col">
+              <h4 class="card-title mb-0">Generate Performance Reports</h4>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="onResetForm()">
+                <i class="fas fa-redo me-2"></i>Reset Form
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <form [formGroup]="reportForm" (ngSubmit)="onGenerateReport()">
+            <!-- Geographic Filters Row -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="battalionId" class="form-label">Battalion</label>
+                <select 
+                  class="form-select" 
+                  id="battalionId" 
+                  formControlName="battalionId">
+                  <option value="">Select Battalion</option>
+                  <option *ngFor="let battalion of battalions" [value]="battalion.id">
+                    {{battalion.battalionName}}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Module and Topic Filters Row -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="moduleId" class="form-label">Module</label>
+                <select 
+                  class="form-select" 
+                  id="moduleId" 
+                  formControlName="moduleId"
+                  (change)="onModuleChange()">
+                  <option value="">Select Module</option>
+                  <option *ngFor="let module of modules" [value]="module.id">
+                    {{module.moduleName}}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label for="topicId" class="form-label">Topic</label>
+                <select 
+                  class="form-select" 
+                  id="topicId" 
+                  formControlName="topicId"
+                  (change)="onTopicChange()"
+                  [disabled]="filteredTopics.length === 0">
+                  <option value="">Select Topic</option>
+                  <option *ngFor="let topic of filteredTopics" [value]="topic.id">
+                    {{topic.topicName}}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label for="subTopicId" class="form-label">Sub Topic</label>
+                <select 
+                  class="form-select" 
+                  id="subTopicId" 
+                  formControlName="subTopicId"
+                  (change)="onSubTopicChange()"
+                  [disabled]="filteredSubTopics.length === 0">
+                  <option value="">Select SubTopic</option>
+                  <option *ngFor="let subTopic of filteredSubTopics" [value]="subTopic.id">
+                    {{subTopic.subTopicName}}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Questions Row -->
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label for="questionId" class="form-label">Questions</label>
+                <select 
+                  class="form-select" 
+                  id="questionId" 
+                  formControlName="questionId"
+                  [disabled]="filteredQuestions.length === 0">
+                  <option value="">Select Question</option>
+                  <option *ngFor="let question of filteredQuestions" [value]="question.id">
+                    {{question.question}}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Date Range Section -->
+            <div class="row mb-3">
+              <div class="col-12">
+                <h5 class="mb-3">Date Range</h5>
+              </div>
+            </div>
+
+            <!-- Start Date Row -->
+            <div class="row mb-3">
+              <div class="col-md-2">
+                <label class="form-label">Select Start Month:</label>
+              </div>
+              <div class="col-md-4">
+                <select class="form-select" formControlName="startMonth">
+                  <option value="">Select Month</option>
+                  <option *ngFor="let month of months" [value]="month.value">
+                    {{month.label}}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <select class="form-select" formControlName="startYear">
+                  <option *ngFor="let year of years" [value]="year">
+                    {{year}}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- End Date Row -->
+            <div class="row mb-4">
+              <div class="col-md-2">
+                <label class="form-label">Select End Month:</label>
+              </div>
+              <div class="col-md-4">
+                <select class="form-select" formControlName="endMonth">
+                  <option value="">Select Month</option>
+                  <option *ngFor="let month of months" [value]="month.value">
+                    {{month.label}}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <select class="form-select" formControlName="endYear">
+                  <option *ngFor="let year of years" [value]="year">
+                    {{year}}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Report Options Section -->
+            <div class="row mb-3">
+              <div class="col-12">
+                <h5 class="mb-3">Report Options</h5>
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-md-4">
+                <label for="reportType" class="form-label">Report Type</label>
+                <select class="form-select" id="reportType" formControlName="reportType">
+                  <option value="summary">Summary Report</option>
+                  <option value="detailed">Detailed Report</option>
+                  <option value="comparative">Comparative Report</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check form-switch mt-4">
+                  <input class="form-check-input" type="checkbox" id="includeCharts" formControlName="includeCharts">
+                  <label class="form-check-label" for="includeCharts">
+                    Include Charts
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check form-switch mt-4">
+                  <input class="form-check-input" type="checkbox" id="includeTable" formControlName="includeTable">
+                  <label class="form-check-label" for="includeTable">
+                    Include Data Tables
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-center gap-3">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-primary"
+                    (click)="onViewReport()"
+                    [disabled]="isGenerating || reportForm.invalid">
+                    <i class="fas fa-eye me-2"></i>
+                    <span *ngIf="!isGenerating">View Report</span>
+                    <span *ngIf="isGenerating">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Generating...
+                    </span>
+                  </button>
+
+                  <button 
+                    type="submit" 
+                    class="btn btn-primary"
+                    [disabled]="isGenerating || reportForm.invalid">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    <span *ngIf="!isGenerating">Generate Report</span>
+                    <span *ngIf="isGenerating">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Generating...
+                    </span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    class="btn btn-success"
+                    (click)="onDownloadExcel()"
+                    [disabled]="isGenerating || reportForm.invalid">
+                    <i class="fas fa-file-excel me-2"></i>
+                    <span *ngIf="!isGenerating">Download Excel Report</span>
+                    <span *ngIf="isGenerating">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Downloading...
+                    </span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    class="btn btn-danger"
+                    (click)="onDownloadPDF()"
+                    [disabled]="isGenerating || reportForm.invalid">
+                    <i class="fas fa-file-pdf me-2"></i>
+                    <span *ngIf="!isGenerating">Download PDF Report</span>
+                    <span *ngIf="isGenerating">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Downloading...
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="overlay">
+    <div class="d-flex justify-content-center align-items-center h-100">
+      <div class="text-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2">Loading data...</div>
+      </div>
+    </div>
+  </div>
 </div>
