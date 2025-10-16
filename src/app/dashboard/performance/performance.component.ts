@@ -229,10 +229,25 @@ export class PerformanceComponent implements OnInit {
         this.currentTopic.questionDTOs.forEach((question, index) => {
           // console.log(`Processing question ${index + 1}:`, question.question);
           const controlName = `question_${question.id}`;
-          formControls[controlName] = [
-            question.currentCount || question.defaultVal || '',
-            question.type === 'REQUIRED' ? [Validators.required] : []
-          ];
+          
+          // Check if this is a calculated field (has formula)
+          const isCalculated = question.formula && question.formula.trim() !== '';
+          
+          if (isCalculated) {
+            // For calculated fields, set initial value and make readonly
+            const calculatedValue = this.calculateInitialFormulaValue(question);
+            console.log(`Setting up calculated field ${question.id} with initial value: ${calculatedValue}`);
+            formControls[controlName] = [
+              { value: calculatedValue, disabled: true }, // Disabled for calculated fields
+              question.type === 'REQUIRED' ? [Validators.required] : []
+            ];
+          } else {
+            // For regular fields, use current count or default value
+            formControls[controlName] = [
+              question.currentCount || question.defaultVal || '',
+              question.type === 'REQUIRED' ? [Validators.required] : []
+            ];
+          }
         });
       }
     }
@@ -351,7 +366,23 @@ export class PerformanceComponent implements OnInit {
         // console.log(`Calculated value for question ${question.id}:`, calculatedValue);
         
         // Update the calculated field in the form if it exists
-        if (this.currentTopic && (this.currentTopic.formType === 'Q/ST' || this.currentTopic.formType === 'ST/Q')) {
+        if (this.currentTopic && this.currentTopic.formType === 'NORMAL') {
+          // For NORMAL forms, update the question control directly
+          const formulaParts = question.formula.split('=');
+          if (formulaParts.length === 2) {
+            const targetRef = formulaParts[1].trim();
+            // In NORMAL forms, target is typically the question ID itself
+            const targetControlName = `question_${targetRef}`;
+            const targetControl = this.performanceForm.get(targetControlName);
+            
+            if (targetControl) {
+              console.log(`NORMAL form - Setting calculated value "${calculatedValue}" to control "${targetControlName}"`);
+              targetControl.setValue(calculatedValue, { emitEvent: false });
+            } else {
+              console.warn(`NORMAL form - Target control "${targetControlName}" not found`);
+            }
+          }
+        } else if (this.currentTopic && (this.currentTopic.formType === 'Q/ST' || this.currentTopic.formType === 'ST/Q')) {
           // For matrix forms, find the target field from the formula
           const formulaParts = question.formula.split('=');
           // console.log(`Formula parts for question ${question.id}:`, formulaParts);
@@ -407,7 +438,19 @@ export class PerformanceComponent implements OnInit {
   }
 
   /**
-   * Check if a specific field is calculated by a formula
+   * Check if a question is calculated by a formula in NORMAL forms
+   */
+  isCalculatedFieldNormal(questionId: number): boolean {
+    if (!this.currentTopic || this.currentTopic.formType !== 'NORMAL') return false;
+    
+    const questions = this.currentTopic.questionDTOs || this.currentTopic.questions || [];
+    const question = questions.find(q => q.id === questionId);
+    
+    return !!(question && question.formula && question.formula.trim() !== '');
+  }
+
+  /**
+   * Check if a specific field is calculated by a formula (for matrix forms)
    */
   isCalculatedField(questionId: number, subTopicId: number): boolean {
     if (!this.currentTopic) return false;
@@ -760,6 +803,51 @@ export class PerformanceComponent implements OnInit {
   }
 
   /**
+   * Calculate initial formula value using currentCount from API data (before form is built)
+   */
+  private calculateInitialFormulaValue(question: QuestionDTO): string {
+    if (!question.formula) {
+      return question.currentCount || question.defaultVal || '';
+    }
+    
+    try {
+      // Split the formula by '=' to get the calculation part
+      const formulaParts = question.formula.split('=');
+      if (formulaParts.length !== 2) {
+        return question.currentCount || question.defaultVal || '';
+      }
+      
+      let calculationExpression = formulaParts[0].trim();
+      
+      // Replace question IDs with their currentCount values from API
+      if (this.currentTopic?.questionDTOs) {
+        this.currentTopic.questionDTOs.forEach(q => {
+          const questionIdPattern = new RegExp(`\\b${q.id}\\b`, 'g');
+          
+          if (questionIdPattern.test(calculationExpression)) {
+            const valueToUse = parseFloat(q.currentCount || '0') || 0;
+            console.log(`Initial calculation - Replacing ${q.id} with currentCount: ${valueToUse}`);
+            calculationExpression = calculationExpression.replace(questionIdPattern, valueToUse.toString());
+          }
+        });
+      }
+      
+      // Evaluate the expression
+      if (!/^[\d\s+\-*/().]+$/.test(calculationExpression)) {
+        return question.currentCount || question.defaultVal || '';
+      }
+      
+      const result = eval(calculationExpression);
+      const resultString = result.toString();
+      console.log(`Initial formula calculation for question ${question.id}: ${question.formula} = ${resultString}`);
+      return resultString;
+    } catch (error) {
+      console.error('Initial formula calculation error:', error);
+      return question.currentCount || question.defaultVal || '';
+    }
+  }
+
+  /**
    * Calculate formula-based values for a specific column (subtopic)
    */
   calculateFormulaValueForColumn(question: QuestionDTO, subTopicId: number): string {
@@ -856,18 +944,31 @@ export class PerformanceComponent implements OnInit {
         }
       });
       
-      // Handle simple question ID references (QID format like: 651-652=653)
-      // Find all question IDs in the expression and replace with row totals
+      // Handle simple question ID references based on form type
       if (this.currentTopic?.questionDTOs) {
         this.currentTopic.questionDTOs.forEach(q => {
           const questionIdPattern = new RegExp(`\\b${q.id}\\b`, 'g');
           
           // Check if this question ID appears in the calculation expression
           if (questionIdPattern.test(calculationExpression)) {
-            // Calculate the row total for this question
-            const rowTotal = this.calculateRowTotal(q.id);
-            // console.log(`Replacing question ID ${q.id} with row total ${rowTotal} in expression`);
-            calculationExpression = calculationExpression.replace(new RegExp(`\\b${q.id}\\b`, 'g'), rowTotal.toString());
+            let valueToReplace = 0;
+            
+            if (this.currentTopic?.formType === 'NORMAL') {
+              // For NORMAL forms, use form control values or currentCount from API
+              const controlName = `question_${q.id}`;
+              const controlValue = formValues[controlName];
+              valueToReplace = controlValue !== undefined && controlValue !== '' ? 
+                parseFloat(controlValue) || 0 : 
+                parseFloat(q.currentCount || '0') || 0;
+              
+              console.log(`NORMAL form - Replacing question ID ${q.id} with value: ${valueToReplace} (control: ${controlValue}, currentCount: ${q.currentCount})`);
+            } else {
+              // For matrix forms (Q/ST, ST/Q), calculate row totals
+              valueToReplace = this.calculateRowTotal(q.id);
+              console.log(`Matrix form - Replacing question ID ${q.id} with row total: ${valueToReplace}`);
+            }
+            
+            calculationExpression = calculationExpression.replace(new RegExp(`\\b${q.id}\\b`, 'g'), valueToReplace.toString());
           }
         });
       }
@@ -970,6 +1071,34 @@ export class PerformanceComponent implements OnInit {
   closeOTPModal(): void {
     this.showOTPModal = false;
     this.otpValue = '';
+  }
+
+  /**
+   * Get cumulative value for a question (for NORMAL forms)
+   */
+  getCumulativeValue(question: QuestionDTO): string {
+    // For calculated fields, use the current form control value
+    if (question.formula && question.formula.trim() !== '') {
+      const controlName = `question_${question.id}`;
+      const control = this.performanceForm.get(controlName);
+      if (control) {
+        const currentValue = control.value;
+        return currentValue !== undefined && currentValue !== '' ? currentValue : '0';
+      }
+    }
+    
+    // For regular fields, use finYearCount from API or current form value
+    const controlName = `question_${question.id}`;
+    const control = this.performanceForm.get(controlName);
+    if (control) {
+      const currentValue = control.value;
+      // If form has a value, use it; otherwise fallback to finYearCount
+      if (currentValue !== undefined && currentValue !== '') {
+        return currentValue;
+      }
+    }
+    
+    return question.finYearCount || question.currentCount || '0';
   }
 
   /**
