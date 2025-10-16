@@ -1,6 +1,5 @@
-/* ---------- Table Panel ---------- */
+/* ---------- Responsive Table Panel ---------- */
 .table-panel {
-  overflow-x: auto;
   background: #fff;
   padding: 15px;
   border-radius: 8px;
@@ -8,9 +7,16 @@
   margin-top: 15px;
 }
 
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Make table look better */
 .table {
   margin-bottom: 0;
+  min-width: 800px; /* Ensure proper table width */
 }
 
 .table th {
@@ -22,6 +28,37 @@
 .table td {
   padding: 10px;
   vertical-align: middle;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .table-panel {
+    padding: 10px;
+    margin: 0 -10px;
+    border-radius: 0;
+  }
+
+  .table {
+    min-width: 600px;
+    font-size: 14px;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .table {
+    min-width: 500px;
+    font-size: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 6px 4px;
+  }
 }
 
 /* ---------- Modal ---------- */
@@ -73,10 +110,12 @@
   background: #fff;
 }
 
-/* ---------- Header ---------- */
+/* ---------- Consistent Header ---------- */
 .modal-header {
-  border-bottom: 1px solid #dee2e6;
-  padding: 15px 20px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  padding: 20px 25px;
+  border-bottom: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -84,14 +123,31 @@
 
 .modal-title {
   font-weight: 600;
+  color: white;
+  margin: 0;
+  font-size: 20px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .btn-close {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  font-size: 1.3rem;
-  line-height: 1;
-  color: #333;
+  font-size: 20px;
+  cursor: pointer;
+  color: white;
+  padding: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
 /* ---------- Form ---------- */

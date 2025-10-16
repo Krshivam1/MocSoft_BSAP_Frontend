@@ -48,7 +48,10 @@
           <td>{{getSubTopicName(question)}}</td>
           <td>{{question.question}}</td>
           <td>{{question.defaultVal || 'NONE'}}</td>
-          <td>{{question.formula || ''}}</td>
+          <td class="formula-cell">
+            <pre *ngIf="question.formula && question.formula !== ''" class="formula-text">{{ formatFormula(question.formula) }}</pre>
+            <span *ngIf="!question.formula || question.formula === ''" class="no-formula">-</span>
+          </td>
           <td>
             <span class="priority-badge">{{question.priority || 0}}</span>
           </td>

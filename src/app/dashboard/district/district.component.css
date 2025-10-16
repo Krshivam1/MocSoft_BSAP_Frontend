@@ -17,37 +17,76 @@
   white-space: nowrap;
 }
 
-/* Table column width adjustments */
-.data-table {
-  table-layout: fixed;
+/* Responsive Table Layout */
+.table-wrapper {
   width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.data-table th:nth-child(1) { width: 4%; }   /* ID */
-.data-table th:nth-child(2) { width: 40%; }   /* Range */
-.data-table th:nth-child(3) { width: 16%; }  /* District Name */
-.data-table th:nth-child(4) { width: 40%; }   /* District Head */
-/* .data-table th:nth-child(5) { width: 7%; }   /* Mobile */
-.data-table th:nth-child(6) { width: 7%; }   /* Contact */
-.data-table th:nth-child(7) { width: 8%; }   /* Email */
-.data-table th:nth-child(8) { width: 5%; }   /* Area */
-.data-table th:nth-child(9) { width: 15%; }  /* Description */
-.data-table th:nth-child(10) { width: 5%; }  /* Image */
-.data-table th:nth-child(11) { width: 6%; }  /* Active */
-.data-table th:nth-child(12) { width: 16%; } /* Actions */
+.data-table {
+  width: 100%;
+  min-width: 900px; /* Minimum width for proper display */
+  table-layout: auto;
+}
 
-.data-table td:nth-child(1) { width: 4%; }   /* ID */
-.data-table td:nth-child(2) { width: 8%; }   /* Range */
-.data-table td:nth-child(3) { width: 10%; }  /* District Name */
-.data-table td:nth-child(4) { width: 9%; }   /* District Head */
-.data-table td:nth-child(5) { width: 7%; }   /* Mobile */
-.data-table td:nth-child(6) { width: 7%; }   /* Contact */
-.data-table td:nth-child(7) { width: 8%; }   /* Email */
-.data-table td:nth-child(8) { width: 5%; }   /* Area */
-.data-table td:nth-child(9) { width: 15%; }  /* Description */
-.data-table td:nth-child(10) { width: 5%; }  /* Image */
-.data-table td:nth-child(11) { width: 6%; }  /* Active */
-.data-table td:nth-child(12) { width: 16%; } Actions */
+/* Desktop column widths - optimized for better distribution */
+@media (min-width: 1200px) {
+  .data-table th:nth-child(1) { width: 5%; }   /* ID */
+  .data-table th:nth-child(2) { width: 12%; }  /* Range */
+  .data-table th:nth-child(3) { width: 15%; }  /* District Name */
+  .data-table th:nth-child(4) { width: 15%; }  /* District Head */
+  .data-table th:nth-child(5) { width: 10%; }  /* Mobile */
+  .data-table th:nth-child(6) { width: 10%; }  /* Contact */
+  .data-table th:nth-child(7) { width: 12%; }  /* Email */
+  .data-table th:nth-child(8) { width: 8%; }   /* Area */
+  .data-table th:nth-child(9) { width: 8%; }   /* Description */
+  .data-table th:nth-child(10) { width: 5%; }  /* Image */
+  .data-table th:nth-child(11) { width: 8%; }  /* Active */
+  .data-table th:nth-child(12) { width: 12%; } /* Actions */
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .data-table {
+    min-width: 800px;
+  }
+  
+  .data-table th:nth-child(9),
+  .data-table td:nth-child(9) {
+    max-width: 100px; /* Limit description width on smaller screens */
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+  .data-table {
+    min-width: 700px;
+    font-size: 12px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 6px 4px;
+  }
+
+  /* Hide less critical columns on mobile */
+  .data-table th:nth-child(8),
+  .data-table td:nth-child(8),
+  .data-table th:nth-child(9),
+  .data-table td:nth-child(9) {
+    display: none;
+  }
+
+  .area-badge {
+    font-size: 0.75em;
+    padding: 2px 6px;
+  }
+
+  .description-cell {
+    max-width: 80px;
+  }
+}
 
 .image-preview {
   position: relative;
@@ -88,7 +127,7 @@
   color: #333;
   margin-bottom: 20px;
 }
-/* Simple modal styling */
+/* Consistent modal styling using global design */
 .modal {
   position: fixed;
   top: 0;
@@ -96,17 +135,105 @@
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+  padding: 20px;
 }
 
 .modal-dialog {
-  margin: 100px auto;
-  max-width: 500px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
 }
 
 .modal-content {
   background: #fff;
-  padding: 15px;
-  border-radius: 6px;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Apply consistent modal header */
+.modal-header {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  padding: 20px 25px;
+  border-bottom: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2,
+.modal-header .modal-title {
+  margin: 0;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-header .close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: white;
+  padding: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.modal-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Responsive modal adjustments */
+@media (max-width: 768px) {
+  .modal {
+    padding: 10px;
+  }
+
+  .modal-dialog {
+    max-width: 95vw;
+  }
+
+  .modal-header {
+    padding: 15px 20px;
+  }
+
+  .modal-header h2,
+  .modal-header .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-header .close-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal {
+    padding: 5px;
+  }
+
+  .modal-header {
+    padding: 12px 15px;
+  }
+
+  .modal-header h2,
+  .modal-header .modal-title {
+    font-size: 16px;
+  }
 }
 .page-title-subheading {
   margin-top: 4px; /* small spacing below heading */

@@ -1,0 +1,17 @@
+<!-- SOLUTION: Update your questions.component.html file -->
+
+<!-- Find your formula column (6th column) and change it from: -->
+<td>{{ question.formula }}</td>
+
+<!-- TO THIS: -->
+<td class="formula-cell">
+  <pre>{{ formatFormula(question.formula) }}</pre>
+</td>
+
+<!-- 
+This will:
+1. Break formulas every 20 characters
+2. Display them in multiple lines
+3. Keep them within the column width
+4. Use monospace font for better readability
+-->

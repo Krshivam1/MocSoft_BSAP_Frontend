@@ -522,4 +522,21 @@ export class QuestionsComponent implements OnInit {
   trackByQuestionId(index: number, question: Question): number {
     return question.id;
   }
+
+  formatFormula(formula: string): string {
+    if (!formula) return '';
+    
+    // Break formula text every 20 characters with a line break
+    const maxCharsPerLine = 20;
+    let result = '';
+    
+    for (let i = 0; i < formula.length; i += maxCharsPerLine) {
+      result += formula.substr(i, maxCharsPerLine);
+      if (i + maxCharsPerLine < formula.length) {
+        result += '\n';
+      }
+    }
+    
+    return result;
+  }
 }
