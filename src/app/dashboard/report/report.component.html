@@ -31,19 +31,93 @@
 
         <div class="card-body">
           <form [formGroup]="reportForm" (ngSubmit)="onGenerateReport()">
+            <!-- Report Type Selection -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <label class="form-label fw-bold">Report Type <span class="text-danger">*</span></label>
+                <div class="row">
+                  <div class="col-md-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="reportTypeRadio" 
+                             id="summary" value="SUMMARY" formControlName="reportType">
+                      <label class="form-check-label" for="summary">Summary</label>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="reportTypeRadio" 
+                             id="detailed" value="DETAILED" formControlName="reportType">
+                      <label class="form-check-label" for="detailed">Detailed</label>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="reportTypeRadio" 
+                             id="comparison" value="COMPARISON" formControlName="reportType">
+                      <label class="form-check-label" for="comparison">Comparison</label>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="reportTypeRadio" 
+                             id="trend" value="TREND" formControlName="reportType">
+                      <label class="form-check-label" for="trend">Trend</label>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="reportTypeRadio" 
+                             id="performance" value="PERFORMANCE" formControlName="reportType">
+                      <label class="form-check-label" for="performance">Performance</label>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="reportTypeRadio" 
+                             id="compliance" value="COMPLIANCE" formControlName="reportType">
+                      <label class="form-check-label" for="compliance">Compliance</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Geographic Filters Row -->
             <div class="row mb-3">
-              <div class="col-md-4">
-                <label for="battalionId" class="form-label">Battalion</label>
+              <div class="col-md-6">
+                <label for="battalionIds" class="form-label">Battalion(s) <span class="text-danger">*</span></label>
                 <select 
-                  class="form-select" 
-                  id="battalionId" 
-                  formControlName="battalionId">
-                  <option value="">Select Battalion</option>
+                  class="form-select"
+                  id="battalionIds"
+                  formControlName="battalionIds"
+                  multiple
+                  size="4"
+                  [class.is-invalid]="isFieldInvalid('battalionIds')">
                   <option *ngFor="let battalion of battalions" [value]="battalion.id">
                     {{battalion.battalionName}}
                   </option>
                 </select>
+                <div class="form-text">Hold Ctrl/Cmd to select multiple battalions</div>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('battalionIds')">
+                  Please select at least one battalion
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="moduleId" class="form-label">Module <span class="text-danger">*</span></label>
+                <select 
+                  class="form-select" 
+                  id="moduleId" 
+                  formControlName="moduleId"
+                  (change)="onModuleChange()"
+                  [class.is-invalid]="isFieldInvalid('moduleId')">
+                  <option value="">Select Module</option>
+                  <option *ngFor="let module of modules" [value]="module.id">
+                    {{module.moduleName}}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('moduleId')">
+                  Please select a module
+                </div>
               </div>
             </div>
 
@@ -112,53 +186,73 @@
             </div>
 
             <!-- Date Range Section -->
-            <div class="row mb-3">
+            <div class="row mb-3" *ngIf="showDateRange()">
               <div class="col-12">
-                <h5 class="mb-3">Date Range</h5>
+                <h5 class="mb-3">Date Range <span class="text-danger">*</span></h5>
               </div>
             </div>
 
-            <!-- Start Date Row -->
-            <div class="row mb-3">
-              <div class="col-md-2">
-                <label class="form-label">Select Start Month:</label>
-              </div>
-              <div class="col-md-4">
-                <select class="form-select" formControlName="startMonth">
+            <!-- Single Month/Year for Summary, Performance, Compliance -->
+            <div class="row mb-3" *ngIf="isSingleMonthReport()">
+              <div class="col-md-6">
+                <label class="form-label">Month <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="month" [class.is-invalid]="isFieldInvalid('month')">
                   <option value="">Select Month</option>
                   <option *ngFor="let month of months" [value]="month.value">
                     {{month.label}}
                   </option>
                 </select>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('month')">
+                  Please select a month
+                </div>
               </div>
-              <div class="col-md-4">
-                <select class="form-select" formControlName="startYear">
+              <div class="col-md-6">
+                <label class="form-label">Year <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="year" [class.is-invalid]="isFieldInvalid('year')">
                   <option *ngFor="let year of years" [value]="year">
                     {{year}}
                   </option>
                 </select>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('year')">
+                  Please select a year
+                </div>
               </div>
             </div>
 
-            <!-- End Date Row -->
-            <div class="row mb-4">
-              <div class="col-md-2">
-                <label class="form-label">Select End Month:</label>
+            <!-- Date Range for Detailed, Comparison, Trend -->
+            <div class="row mb-3" *ngIf="isDateRangeReport()">
+              <div class="col-md-6">
+                <label class="form-label">From Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-select" formControlName="fromDate" 
+                       [class.is-invalid]="isFieldInvalid('fromDate')">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('fromDate')">
+                  Please select from date
+                </div>
               </div>
-              <div class="col-md-4">
-                <select class="form-select" formControlName="endMonth">
-                  <option value="">Select Month</option>
-                  <option *ngFor="let month of months" [value]="month.value">
-                    {{month.label}}
-                  </option>
-                </select>
+              <div class="col-md-6">
+                <label class="form-label">To Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-select" formControlName="toDate"
+                       [class.is-invalid]="isFieldInvalid('toDate')">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('toDate')">
+                  Please select to date
+                </div>
               </div>
-              <div class="col-md-4">
-                <select class="form-select" formControlName="endYear">
-                  <option *ngFor="let year of years" [value]="year">
-                    {{year}}
-                  </option>
+            </div>
+
+            <!-- Trend Period for Trend Reports -->
+            <div class="row mb-3" *ngIf="reportForm.get('reportType')?.value === 'TREND'">
+              <div class="col-md-6">
+                <label class="form-label">Trend Period <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="trendPeriod" [class.is-invalid]="isFieldInvalid('trendPeriod')">
+                  <option value="">Select Period</option>
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="MONTHLY">Monthly</option>
+                  <option value="QUARTERLY">Quarterly</option>
                 </select>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('trendPeriod')">
+                  Please select trend period
+                </div>
               </div>
             </div>
 
@@ -170,49 +264,43 @@
             </div>
 
             <div class="row mb-4">
-              <div class="col-md-4">
-                <label for="reportType" class="form-label">Report Type</label>
-                <select class="form-select" id="reportType" formControlName="reportType">
-                  <option value="summary">Summary Report</option>
-                  <option value="detailed">Detailed Report</option>
-                  <option value="comparative">Comparative Report</option>
+              <!-- View Type for Summary Reports -->
+              <div class="col-md-4" *ngIf="reportForm.get('reportType')?.value === 'SUMMARY'">
+                <label for="viewType" class="form-label">View Type</label>
+                <select class="form-select" id="viewType" formControlName="viewType">
+                  <option value="BOTH">Both Chart & Table</option>
+                  <option value="CHART">Chart Only</option>
+                  <option value="TABLE">Table Only</option>
                 </select>
               </div>
-              <div class="col-md-4">
-                <div class="form-check form-switch mt-4">
-                  <input class="form-check-input" type="checkbox" id="includeCharts" formControlName="includeCharts">
-                  <label class="form-check-label" for="includeCharts">
-                    Include Charts
-                  </label>
-                </div>
+
+              <!-- Chart Configuration -->
+              <div class="col-md-4" *ngIf="showChartConfig()">
+                <label for="chartType" class="form-label">Chart Type</label>
+                <select class="form-select" id="chartType" formControlName="chartType">
+                  <option value="BAR">Bar Chart</option>
+                  <option value="LINE" *ngIf="reportForm.get('reportType')?.value === 'TREND'">Line Chart</option>
+                  <option value="PIE">Pie Chart</option>
+                  <option value="AREA" *ngIf="reportForm.get('reportType')?.value === 'TREND'">Area Chart</option>
+                </select>
               </div>
+
+              <!-- Pagination -->
               <div class="col-md-4">
-                <div class="form-check form-switch mt-4">
-                  <input class="form-check-input" type="checkbox" id="includeTable" formControlName="includeTable">
-                  <label class="form-check-label" for="includeTable">
-                    Include Data Tables
-                  </label>
-                </div>
+                <label for="pageSize" class="form-label">Page Size</label>
+                <select class="form-select" id="pageSize" formControlName="pageSize">
+                  <option value="10">10 Records</option>
+                  <option value="25">25 Records</option>
+                  <option value="50">50 Records</option>
+                  <option value="100">100 Records</option>
+                </select>
               </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="row">
               <div class="col-12">
-                <div class="d-flex justify-content-center gap-3">
-                  <button 
-                    type="button" 
-                    class="btn btn-outline-primary"
-                    (click)="onViewReport()"
-                    [disabled]="isGenerating || reportForm.invalid">
-                    <i class="fas fa-eye me-2"></i>
-                    <span *ngIf="!isGenerating">View Report</span>
-                    <span *ngIf="isGenerating">
-                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Generating...
-                    </span>
-                  </button>
-
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
                   <button 
                     type="submit" 
                     class="btn btn-primary"
@@ -225,35 +313,404 @@
                     </span>
                   </button>
 
+                  <div class="dropdown">
+                    <button 
+                      class="btn btn-success dropdown-toggle" 
+                      type="button" 
+                      id="exportDropdown" 
+                      data-bs-toggle="dropdown" 
+                      aria-expanded="false"
+                      [disabled]="isGenerating || reportForm.invalid || !hasGeneratedReport()">
+                      <i class="fas fa-download me-2"></i>Export Report
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                      <li>
+                        <a class="dropdown-item" href="#" (click)="onExportReport('CSV'); $event.preventDefault()">
+                          <i class="fas fa-file-csv me-2"></i>Export as CSV
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="#" (click)="onExportReport('EXCEL'); $event.preventDefault()">
+                          <i class="fas fa-file-excel me-2"></i>Export as Excel
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="#" (click)="onExportReport('PDF'); $event.preventDefault()">
+                          <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="#" (click)="onExportReport('JSON'); $event.preventDefault()">
+                          <i class="fas fa-file-code me-2"></i>Export as JSON
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+
                   <button 
                     type="button" 
-                    class="btn btn-success"
-                    (click)="onDownloadExcel()"
-                    [disabled]="isGenerating || reportForm.invalid">
-                    <i class="fas fa-file-excel me-2"></i>
-                    <span *ngIf="!isGenerating">Download Excel Report</span>
-                    <span *ngIf="isGenerating">
-                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Downloading...
-                    </span>
+                    class="btn btn-info"
+                    (click)="onGetMetadata()"
+                    [disabled]="isGenerating">
+                    <i class="fas fa-info-circle me-2"></i>Get Metadata
                   </button>
 
                   <button 
                     type="button" 
-                    class="btn btn-danger"
-                    (click)="onDownloadPDF()"
-                    [disabled]="isGenerating || reportForm.invalid">
-                    <i class="fas fa-file-pdf me-2"></i>
-                    <span *ngIf="!isGenerating">Download PDF Report</span>
-                    <span *ngIf="isGenerating">
-                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Downloading...
-                    </span>
+                    class="btn btn-warning"
+                    (click)="onGetTemplates()"
+                    [disabled]="isGenerating">
+                    <i class="fas fa-template me-2"></i>View Templates
                   </button>
                 </div>
               </div>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Results Section -->
+  <div class="row" *ngIf="reportData">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col">
+              <h4 class="card-title mb-0">
+                <i class="fas fa-chart-line me-2"></i>Report Results
+                <span class="badge bg-primary ms-2">{{reportData.metadata?.reportType}}</span>
+              </h4>
+            </div>
+            <div class="col-auto">
+              <span class="text-muted">
+                Generated: {{reportData.metadata?.generatedAt | date:'medium'}}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Report Summary -->
+          <div class="row mb-4" *ngIf="reportData.summary">
+            <div class="col-12">
+              <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>Report Summary</h6>
+                <div class="row">
+                  <div class="col-md-3">
+                    <strong>Total Records:</strong> {{reportData.summary.overview?.totalRecords || 0}}
+                  </div>
+                  <div class="col-md-3">
+                    <strong>Total Battalions:</strong> {{reportData.summary.overview?.totalBattalions || 0}}
+                  </div>
+                  <div class="col-md-3">
+                    <strong>Total Modules:</strong> {{reportData.summary.overview?.totalModules || 0}}
+                  </div>
+                  <div class="col-md-3">
+                    <strong>Total Questions:</strong> {{reportData.summary.overview?.totalQuestions || 0}}
+                  </div>
+                </div>
+                <div class="row mt-2">
+                  <div class="col-md-3">
+                    <strong>Submission Rate:</strong> {{reportData.summary.completionStatistics?.submissionRate || '0.00'}}%
+                  </div>
+                  <div class="col-md-3">
+                    <strong>Approval Rate:</strong> {{reportData.summary.completionStatistics?.approvalRate || '0.00'}}%
+                  </div>
+                  <div class="col-md-3">
+                    <strong>Total Submitted:</strong> {{reportData.summary.completionStatistics?.totalSubmitted || 0}}
+                  </div>
+                  <div class="col-md-3">
+                    <strong>Total Draft:</strong> {{reportData.summary.completionStatistics?.totalDraft || 0}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Alerts -->
+          <div class="row mb-4" *ngIf="reportData.summary?.alerts && reportData.summary.alerts.length > 0">
+            <div class="col-12">
+              <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Performance Alerts</h6>
+                <div *ngFor="let alert of reportData.summary.alerts" class="mb-2">
+                  <span class="badge" 
+                        [class.bg-danger]="alert.severity === 'HIGH'"
+                        [class.bg-warning]="alert.severity === 'MEDIUM'"
+                        [class.bg-info]="alert.severity === 'LOW'">
+                    {{alert.type}}
+                  </span>
+                  <span class="ms-2">{{alert.message}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="row mb-4" *ngIf="reportData.summary?.recommendations && reportData.summary.recommendations.length > 0">
+            <div class="col-12">
+              <div class="alert alert-success">
+                <h6><i class="fas fa-lightbulb me-2"></i>Recommendations</h6>
+                <ul class="mb-0">
+                  <li *ngFor="let recommendation of reportData.summary.recommendations">
+                    {{recommendation}}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Section -->
+          <div class="row mb-4" *ngIf="reportData.chartData">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>{{reportData.chartData.title}}
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div class="chart-container" style="height: 400px;">
+                    <!-- Chart will be rendered here using Chart.js or similar -->
+                    <canvas id="reportChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Table -->
+          <div class="row" *ngIf="reportData.data && reportData.data.length > 0">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <div class="row align-items-center">
+                    <div class="col">
+                      <h5 class="card-title mb-0">
+                        <i class="fas fa-table me-2"></i>Report Data
+                      </h5>
+                    </div>
+                    <div class="col-auto">
+                      <div class="d-flex gap-2">
+                        <span class="badge bg-secondary">
+                          {{getTotalElements()}} total records
+                        </span>
+                        <span class="badge bg-info" *ngIf="reportData?.pagination">
+                          Page {{getCurrentPage()}} of {{getTotalPages()}}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                      <thead class="table-dark">
+                        <tr>
+                          <th>#</th>
+                          <th>Battalion</th>
+                          <th>Range Code</th>
+                          <th>Module</th>
+                          <th>Topic</th>
+                          <th>Question</th>
+                          <th>Value</th>
+                          <th>Month/Year</th>
+                          <th>Status</th>
+                          <th>Performance</th>
+                          <th>Created Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let item of reportData.data; let i = index">
+                          <td>{{item.rowNumber || (i + 1)}}</td>
+                          <td>{{item.battalionName}}</td>
+                          <td>{{item.rangeCode}}</td>
+                          <td>{{item.moduleName}}</td>
+                          <td>{{item.topicName}}</td>
+                          <td>{{item.questionText}}</td>
+                          <td>
+                            <span class="badge bg-primary">{{item.displayValue || item.value}}</span>
+                          </td>
+                          <td>{{formatMonthYear(item.monthYear)}}</td>
+                          <td>
+                            <span class="badge" 
+                                  [class.bg-success]="item.status === 'SUBMITTED'"
+                                  [class.bg-warning]="item.status === 'DRAFT'"
+                                  [class.bg-danger]="item.status === 'REJECTED'"
+                                  [class.bg-info]="item.status === 'APPROVED'">
+                              {{item.status}}
+                            </span>
+                          </td>
+                          <td>
+                            <span class="badge" 
+                                  [class.bg-success]="item.performanceGrade === 'A+' || item.performanceGrade === 'A'"
+                                  [class.bg-primary]="item.performanceGrade === 'B+' || item.performanceGrade === 'B'"
+                                  [class.bg-warning]="item.performanceGrade === 'C+' || item.performanceGrade === 'C'"
+                                  [class.bg-danger]="item.performanceGrade === 'D' || item.performanceGrade === 'F'">
+                              {{item.performanceGrade}}
+                            </span>
+                          </td>
+                          <td>{{item.createdAt | date:'short'}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Pagination Controls -->
+                  <div class="row mt-3" *ngIf="hasPagination()">
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <div>
+                        <small class="text-muted">
+                          Showing {{getNumberOfElements()}} of {{getTotalElements()}} records
+                        </small>
+                      </div>
+                      <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                          <li class="page-item" [class.disabled]="isPreviousDisabled()">
+                            <a class="page-link" href="#" (click)="onPreviousPage(); $event.preventDefault()">
+                              Previous
+                            </a>
+                          </li>
+                          <li class="page-item active">
+                            <span class="page-link">
+                              {{getCurrentPage()}}
+                            </span>
+                          </li>
+                          <li class="page-item" [class.disabled]="isNextDisabled()">
+                            <a class="page-link" href="#" (click)="onNextPage(); $event.preventDefault()">
+                              Next
+                            </a>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Metrics Section -->
+  <div class="row" *ngIf="reportData?.performance">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>Performance Metrics
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h6 class="card-title">Query Performance</h6>
+                  <h4 class="text-primary">{{reportData?.performance?.queryMetrics?.totalQueryTime}}</h4>
+                  <p class="text-muted mb-0">Total Query Time</p>
+                  <small class="text-muted">
+                    {{reportData?.performance?.queryMetrics?.recordsScanned}} records scanned
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h6 class="card-title">Processing Time</h6>
+                  <h4 class="text-success">{{reportData?.performance?.processingMetrics?.totalProcessingTime}}</h4>
+                  <p class="text-muted mb-0">Total Processing</p>
+                  <small class="text-muted">
+                    {{reportData?.performance?.queryMetrics?.recordsReturned}} records returned
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h6 class="card-title">Cache Status</h6>
+                  <h4 class="text-info">
+                    {{reportData?.performance?.cacheMetrics?.cacheHit ? 'HIT' : 'MISS'}}
+                  </h4>
+                  <p class="text-muted mb-0">Cache Performance</p>
+                  <small class="text-muted">
+                    {{reportData?.performance?.cacheMetrics?.cacheChecked ? 'Checked' : 'Not Checked'}}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metadata Modal -->
+  <div class="modal fade" id="metadataModal" tabindex="-1" aria-labelledby="metadataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="metadataModalLabel">
+            <i class="fas fa-info-circle me-2"></i>Report Metadata
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" *ngIf="metadata">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Available Report Types:</h6>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item" *ngFor="let type of metadata.reportTypes">
+                  <span class="badge bg-primary">{{type}}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>Supported Formats:</h6>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item" *ngFor="let format of metadata.supportedFormats">
+                  <span class="badge bg-success">{{format}}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates Modal -->
+  <div class="modal fade" id="templatesModal" tabindex="-1" aria-labelledby="templatesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="templatesModalLabel">
+            <i class="fas fa-template me-2"></i>Report Templates
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" *ngIf="templates && templates.length > 0">
+          <div class="row">
+            <div class="col-12" *ngFor="let template of templates">
+              <div class="card mb-3">
+                <div class="card-body">
+                  <h6 class="card-title">{{template.name}}</h6>
+                  <p class="card-text">{{template.description}}</p>
+                  <span class="badge bg-info">{{template.reportType}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-body" *ngIf="!templates || templates.length === 0">
+          <div class="text-center">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No templates available</p>
+          </div>
         </div>
       </div>
     </div>

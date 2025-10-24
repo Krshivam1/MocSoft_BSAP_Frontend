@@ -854,30 +854,120 @@ export class ApiService {
     );
   }
 
-  // Report Operations
+  // Report Operations - Battalion-Based Reports
+  
   /**
-   * Generate Report - POST /api/reports/generate
+   * Generate Battalion Summary Report - POST /api/reports/getReport
    */
-  generateReport(data: {
-    stateIds?: number[];
-    rangeIds?: number[];
-    battalionIds?: number[];
-    moduleIds?: number[];
-    topicIds?: number[];
-    subTopicIds?: number[];
-    questionIds?: number[];
-    fromDate?: string;
-    toDate?: string;
-    monthYears?: string[];
-    financialYear?: string;
-    reportType?: string;
-    groupBy?: string;
-    aggregationType?: string;
-    includeCharts?: boolean;
-    includeTable?: boolean;
+  generateBattalionSummaryReport(data: {
+    reportType: 'SUMMARY';
+    battalionIds: number[];
+    moduleId: number;
+    monthYear: string;
+    viewType?: 'BOTH' | 'CHART' | 'TABLE';
+    page?: number;
+    size?: number;
   }): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/generate",
+      this.baseUrl + "reports/getReport",
+      data,
+      { headers: this.headersWithToken = this.getHeaders('application/json') }
+    );
+  }
+
+  /**
+   * Generate Detailed Report - POST /api/reports/getReport
+   */
+  generateDetailedReport(data: {
+    reportType: 'DETAILED';
+    battalionIds: number[];
+    moduleId: number;
+    fromDate: string;
+    toDate: string;
+    page?: number;
+    size?: number;
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      this.baseUrl + "reports/getReport",
+      data,
+      { headers: this.headersWithToken = this.getHeaders('application/json') }
+    );
+  }
+
+  /**
+   * Generate Comparison Report - POST /api/reports/getReport
+   */
+  generateComparisonReport(data: {
+    reportType: 'COMPARISON';
+    battalionIds: number[];
+    moduleId: number;
+    fromDate: string;
+    toDate: string;
+    sortBy?: string;
+    sortDirection?: 'ASC' | 'DESC';
+    chartConfig?: {
+      chartType: 'BAR' | 'LINE' | 'PIE' | 'AREA';
+      title: string;
+    };
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      this.baseUrl + "reports/getReport",
+      data,
+      { headers: this.headersWithToken = this.getHeaders('application/json') }
+    );
+  }
+
+  /**
+   * Generate Trend Analysis Report - POST /api/reports/getReport
+   */
+  generateTrendReport(data: {
+    reportType: 'TREND';
+    battalionIds: number[];
+    moduleId: number;
+    fromDate: string;
+    toDate: string;
+    trendPeriod: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+    chartConfig?: {
+      chartType: 'LINE' | 'AREA';
+      title: string;
+    };
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      this.baseUrl + "reports/getReport",
+      data,
+      { headers: this.headersWithToken = this.getHeaders('application/json') }
+    );
+  }
+
+  /**
+   * Generate Performance Report - POST /api/reports/getReport
+   */
+  generatePerformanceReport(data: {
+    reportType: 'PERFORMANCE';
+    battalionIds: number[];
+    moduleId: number;
+    monthYear: string;
+    performanceMetrics?: string[];
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      this.baseUrl + "reports/getReport",
+      data,
+      { headers: this.headersWithToken = this.getHeaders('application/json') }
+    );
+  }
+
+  /**
+   * Generate Compliance Report - POST /api/reports/getReport
+   */
+  generateComplianceReport(data: {
+    reportType: 'COMPLIANCE';
+    battalionIds: number[];
+    moduleId: number;
+    monthYear: string;
+    complianceThreshold?: number;
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      this.baseUrl + "reports/getReport",
       data,
       { headers: this.headersWithToken = this.getHeaders('application/json') }
     );
@@ -886,447 +976,62 @@ export class ApiService {
   /**
    * Get Report Metadata - GET /api/reports/metadata
    */
-  getReportMetadata(stateId?: number, includeStats?: boolean): Observable<ApiResponse<any>> {
-    let params = '';
-    if (stateId || includeStats !== undefined) {
-      const queryParams = [];
-      if (stateId) queryParams.push(`stateId=${stateId}`);
-      if (includeStats !== undefined) queryParams.push(`includeStats=${includeStats}`);
-      params = '?' + queryParams.join('&');
-    }
-    
+  getReportMetadata(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(
-      this.baseUrl + "reports/metadata" + params,
+      this.baseUrl + "reports/metadata",
       { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get Battalions by Range - GET /api/reports/battalions/:rangeId
-   */
-  getBattalionsByRangeForReport(rangeId: number): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/battalions/" + rangeId,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get Ranges by State - GET /api/reports/ranges/:stateId
-   */
-  getRangesByStateForReport(stateId: number): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/ranges/" + stateId,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Advanced Report Generation - POST /api/reports/advanced
-   */
-  generateAdvancedReport(data: {
-    filters?: {
-      stateIds?: number[];
-      rangeIds?: number[];
-      battalionIds?: number[];
-      moduleIds?: number[];
-      topicIds?: number[];
-      dateRange?: {
-        from: string;
-        to: string;
-      };
-      status?: string;
-    };
-    grouping?: {
-      primary: string;
-      secondary?: string;
-    };
-    aggregations?: Array<{
-      field: string;
-      operation: string;
-      alias: string;
-    }>;
-    sorting?: Array<{
-      field: string;
-      order: string;
-    }>;
-    pagination?: {
-      page: number;
-      limit: number;
-    };
-    format?: {
-      includeCharts?: boolean;
-      chartTypes?: string[];
-      includeMetadata?: boolean;
-    };
-  }): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/advanced",
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Get Report Statistics - GET /api/reports/statistics
-   */
-  getReportStatistics(
-    timeRange: string = '30d',
-    stateId?: number,
-    rangeId?: number,
-    battalionId?: number
-  ): Observable<ApiResponse<any>> {
-    let params = `?timeRange=${timeRange}`;
-    if (stateId) params += `&stateId=${stateId}`;
-    if (rangeId) params += `&rangeId=${rangeId}`;
-    if (battalionId) params += `&battalionId=${battalionId}`;
-    
-    return this.http.get<ApiResponse<any>>(
-      this.baseUrl + "reports/statistics" + params,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get Topics by Module - GET /api/reports/topics/:moduleId
-   */
-  getTopicsByModuleForReport(moduleId: number): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/topics/" + moduleId,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get SubTopics by Topic - GET /api/reports/subtopics/:topicId
-   */
-  getSubTopicsByTopicForReport(topicId: number): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/subtopics/" + topicId,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get Questions by Topic - GET /api/reports/questions/:topicId
-   */
-  getQuestionsByTopicForReport(
-    topicId: number,
-    subTopicId?: number,
-    includeInactive?: boolean
-  ): Observable<ApiResponse<any[]>> {
-    let params = '';
-    if (subTopicId || includeInactive !== undefined) {
-      const queryParams = [];
-      if (subTopicId) queryParams.push(`subTopicId=${subTopicId}`);
-      if (includeInactive !== undefined) queryParams.push(`includeInactive=${includeInactive}`);
-      params = '?' + queryParams.join('&');
-    }
-    
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/questions/" + topicId + params,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Export to Excel - POST /api/reports/excel
-   */
-  exportReportToExcel(data: {
-    reportData: {
-      filters: {
-        stateIds?: number[];
-        rangeIds?: number[];
-        battalionIds?: number[];
-        moduleIds?: number[];
-        topicIds?: number[];
-        dateRange?: {
-          from: string;
-          to: string;
-        };
-      };
-    };
-    format: {
-      filename: string;
-      includeCharts?: boolean;
-      includeMetadata?: boolean;
-    };
-  }): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/excel",
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Custom Report Template - POST /api/reports/custom
-   */
-  createCustomReportTemplate(data: {
-    templateName: string;
-    description: string;
-    filters: {
-      stateIds?: number[];
-      rangeIds?: number[];
-      battalionIds?: number[];
-      moduleIds?: number[];
-      topicIds?: number[];
-    };
-    layout: {
-      sections: Array<{
-        type: string;
-        title: string;
-        includeCharts?: boolean;
-        groupBy?: string;
-      }>;
-    };
-    schedule?: {
-      frequency: string;
-      dayOfMonth?: number;
-      recipients: string[];
-    };
-  }): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/custom",
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Download Report File - GET /api/reports/download/:filename
-   */
-  downloadReportFile(filename: string): Observable<Blob> {
-    return this.http.get(
-      this.baseUrl + "reports/download/" + filename,
-      { 
-        headers: this.headersWithToken = this.getHeaders(),
-        responseType: 'blob'
-      }
     );
   }
 
   /**
    * Get Report Templates - GET /api/reports/templates
    */
-  getReportTemplates(page: number = 1, limit: number = 10): Observable<ApiResponse<any[]>> {
-    const params = `?page=${page}&limit=${limit}`;
+  getReportTemplates(): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/templates" + params,
+      this.baseUrl + "reports/templates",
       { headers: this.headersWithToken = this.getHeaders() }
     );
   }
 
   /**
-   * Update Report Template - PUT /api/reports/templates/:id
+   * Export Report - GET /api/reports/export/:reportId
    */
-  updateReportTemplate(id: number, data: any): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(
-      this.baseUrl + "reports/templates/" + id,
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Delete Report Template - DELETE /api/reports/templates/:id
-   */
-  deleteReportTemplate(id: number): Observable<ApiResponse<any>> {
-    return this.http.delete<ApiResponse<any>>(
-      this.baseUrl + "reports/templates/" + id,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Execute Report Template - POST /api/reports/templates/:id/execute
-   */
-  executeReportTemplate(id: number, overrideParams?: any): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/templates/" + id + "/execute",
-      overrideParams || {},
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Get Report History - GET /api/reports/history
-   */
-  getReportHistory(
-    page: number = 1,
-    limit: number = 10,
-    userId?: number,
-    reportType?: string
-  ): Observable<ApiResponse<any[]>> {
-    let params = `?page=${page}&limit=${limit}`;
-    if (userId) params += `&userId=${userId}`;
-    if (reportType) params += `&reportType=${reportType}`;
-    
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/history" + params,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get Report Performance Metrics - GET /api/reports/performance
-   */
-  getReportPerformanceMetrics(
-    period: string = '30d',
-    groupBy: string = 'day'
-  ): Observable<ApiResponse<any>> {
-    const params = `?period=${period}&groupBy=${groupBy}`;
+  exportReport(reportId: string, format: 'CSV' | 'EXCEL' | 'PDF' | 'JSON'): Observable<ApiResponse<any>> {
+    const params = `?format=${format}`;
     return this.http.get<ApiResponse<any>>(
-      this.baseUrl + "reports/performance" + params,
+      this.baseUrl + "reports/export/" + reportId + params,
       { headers: this.headersWithToken = this.getHeaders() }
     );
   }
 
   /**
-   * Validate Report Filters - POST /api/reports/validate
+   * Generic Report Generation Method - POST /api/reports/getReport
+   * This is the main method that can handle all report types
    */
-  validateReportFilters(filters: any): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/validate",
-      filters,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Get Report Preview - POST /api/reports/preview
-   */
-  getReportPreview(data: {
-    filters: any;
-    groupBy?: string;
-    limit?: number;
-  }): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/preview",
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Get Report Chart Data - POST /api/reports/charts
-   */
-  getReportChartData(data: {
-    filters: any;
-    chartType: string;
-    groupBy: string;
-    aggregationType?: string;
-  }): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/charts",
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Schedule Report - POST /api/reports/schedule
-   */
-  scheduleReport(data: {
-    templateId?: number;
-    filters?: any;
-    schedule: {
-      frequency: string;
-      interval?: number;
-      dayOfWeek?: number;
-      dayOfMonth?: number;
-      time: string;
-    };
-    recipients: string[];
-    format: string;
-  }): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/schedule",
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Get Scheduled Reports - GET /api/reports/scheduled
-   */
-  getScheduledReports(page: number = 1, limit: number = 10): Observable<ApiResponse<any[]>> {
-    const params = `?page=${page}&limit=${limit}`;
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/scheduled" + params,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Update Scheduled Report - PUT /api/reports/scheduled/:id
-   */
-  updateScheduledReport(id: number, data: any): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(
-      this.baseUrl + "reports/scheduled/" + id,
-      data,
-      { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Delete Scheduled Report - DELETE /api/reports/scheduled/:id
-   */
-  deleteScheduledReport(id: number): Observable<ApiResponse<any>> {
-    return this.http.delete<ApiResponse<any>>(
-      this.baseUrl + "reports/scheduled/" + id,
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get Report Formats - GET /api/reports/formats
-   */
-  getReportFormats(): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/formats",
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Export Report to PDF - POST /api/reports/pdf
-   */
-  exportReportToPDF(data: {
-    reportData: any;
-    format: {
-      filename: string;
-      orientation?: string;
-      pageSize?: string;
-      includeCharts?: boolean;
-      includeHeader?: boolean;
-      includeFooter?: boolean;
+  generateReport(data: {
+    reportType: 'SUMMARY' | 'DETAILED' | 'COMPARISON' | 'TREND' | 'PERFORMANCE' | 'COMPLIANCE';
+    battalionIds: number[];
+    moduleId: number;
+    monthYear?: string;
+    fromDate?: string;
+    toDate?: string;
+    viewType?: 'BOTH' | 'CHART' | 'TABLE';
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    sortDirection?: 'ASC' | 'DESC';
+    trendPeriod?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+    performanceMetrics?: string[];
+    complianceThreshold?: number;
+    chartConfig?: {
+      chartType: 'BAR' | 'LINE' | 'PIE' | 'AREA';
+      title: string;
     };
   }): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(
-      this.baseUrl + "reports/pdf",
+      this.baseUrl + "reports/getReport",
       data,
       { headers: this.headersWithToken = this.getHeaders('application/json') }
-    );
-  }
-
-  /**
-   * Get Report Access Permissions - GET /api/reports/permissions
-   */
-  getReportPermissions(): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(
-      this.baseUrl + "reports/permissions",
-      { headers: this.headersWithToken = this.getHeaders() }
-    );
-  }
-
-  /**
-   * Get Data Source Information - GET /api/reports/datasources
-   */
-  getReportDataSources(): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(
-      this.baseUrl + "reports/datasources",
-      { headers: this.headersWithToken = this.getHeaders() }
     );
   }
 
